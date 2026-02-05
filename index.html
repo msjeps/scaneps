@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Scanner QR universel pour applications EPS - Collège Mont Saint Jean">
+    <meta name="author" content="Collège Mont Saint Jean">
+    <title>Scanner QR Universel - EPS</title>
+    
+    <style>
+        :root {
+            --couleur-primaire: #FF6B9D;
+            --couleur-secondaire: #4ECDC4;
+            --couleur-success: #6FCF97;
+            --couleur-warning: #F2994A;
+            --couleur-danger: #EB5757;
+            --couleur-texte: #2C3E50;
+            --couleur-fond: #FFF9F0;
+            --couleur-blanc: #FFFFFF;
+            --ombre-douce: 0 4px 15px rgba(0, 0, 0, 0.1);
+            --ombre-forte: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--couleur-texte);
+        }
+
+        .conteneur-principal {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: var(--couleur-fond);
+            border-radius: 20px;
+            box-shadow: var(--ombre-forte);
+            padding: 30px;
+        }
+
+        .en-tete {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid var(--couleur-primaire);
+        }
+
+        .en-tete h1 {
+            font-size: 2.5em;
+            background: linear-gradient(135deg, var(--couleur-primaire), var(--couleur-secondaire));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .en-tete p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .badge-universel {
+            display: inline-block;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-top: 10px;
+            box-shadow: var(--ombre-douce);
+        }
+
+        .section {
+            background: var(--couleur-blanc);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: var(--ombre-douce);
+        }
+
+        .section h2 {
+            color: var(--couleur-texte);
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Zone de scan */
+        .zone-scan {
+            background: #000;
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            position: relative;
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .overlay-scan {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 280px;
+            height: 280px;
+            border: 4px solid var(--couleur-success);
+            border-radius: 20px;
+            pointer-events: none;
+            box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.4);
+            animation: scanPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes scanPulse {
+            0%, 100% {
+                border-color: var(--couleur-success);
+                box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.4), 0 0 20px var(--couleur-success);
+            }
+            50% {
+                border-color: #5FE8B5;
+                box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.4), 0 0 30px #5FE8B5;
+            }
+        }
+
+        .overlay-scan::before,
+        .overlay-scan::after {
+            content: '';
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 5px solid var(--couleur-success);
+        }
+
+        .overlay-scan::before {
+            top: -5px;
+            left: -5px;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        .overlay-scan::after {
+            bottom: -5px;
+            right: -5px;
+            border-left: none;
+            border-top: none;
+        }
+
+        .scan-line {
+            position: absolute;
+            width: 280px;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--couleur-success), transparent);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: scanLine 2s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes scanLine {
+            0% { top: calc(50% - 140px); }
+            50% { top: calc(50% + 140px); }
+            100% { top: calc(50% - 140px); }
+        }
+
+        /* Contrôles */
+        .controles {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .bouton {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--ombre-douce);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .bouton:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--ombre-forte);
+        }
+
+        .bouton-primaire {
+            background: linear-gradient(135deg, var(--couleur-primaire), #C44569);
+            color: var(--couleur-blanc);
+        }
+
+        .bouton-success {
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+            color: var(--couleur-blanc);
+        }
+
+        .bouton-excel {
+            background: linear-gradient(135deg, #1D6F42, #38ef7d);
+            color: var(--couleur-blanc);
+        }
+
+        .bouton-sheets {
+            background: linear-gradient(135deg, #0F9D58, #34A853);
+            color: var(--couleur-blanc);
+        }
+
+        .bouton-danger {
+            background: linear-gradient(135deg, #FC466B, #3F5EFB);
+            color: var(--couleur-blanc);
+        }
+
+        .bouton:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Statut du scan */
+        .statut-scan {
+            text-align: center;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .statut-attente {
+            background: linear-gradient(135deg, #a8edea, #fed6e3);
+            color: var(--couleur-texte);
+        }
+
+        .statut-scan-actif {
+            background: linear-gradient(135deg, #84fab0, #8fd3f4);
+            color: #0d47a1;
+            animation: pulse 2s infinite;
+        }
+
+        .statut-cooldown {
+            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+            color: #d63031;
+        }
+
+        .statut-success {
+            background: linear-gradient(135deg, #84fab0, #8fd3f4);
+            color: #0d47a1;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* Compteur de scans */
+        .compteur {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .compteur-item {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: var(--couleur-blanc);
+            padding: 20px 30px;
+            border-radius: 16px;
+            text-align: center;
+            min-width: 150px;
+            box-shadow: var(--ombre-douce);
+        }
+
+        .compteur-item .nombre {
+            font-size: 2.5em;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .compteur-item .label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        /* Info colonnes détectées */
+        .info-colonnes {
+            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+            color: #d63031;
+        }
+
+        /* Tableau des données - RESPONSIVE */
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+            border-radius: 12px;
+            box-shadow: var(--ombre-douce);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--couleur-blanc);
+            min-width: 600px;
+        }
+
+        thead {
+            background: linear-gradient(135deg, var(--couleur-primaire), var(--couleur-secondaire));
+            color: var(--couleur-blanc);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 15px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.95em;
+            white-space: nowrap;
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        th:last-child {
+            border-right: none;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #E0E0E0;
+            border-right: 1px solid #F0F0F0;
+        }
+
+        td:last-child {
+            border-right: none;
+        }
+
+        tbody tr:hover {
+            background: #F5F5F5;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .actions-cellule {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+        }
+
+        .btn-mini {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.2s;
+        }
+
+        .btn-supprimer {
+            background: var(--couleur-danger);
+            color: white;
+        }
+
+        .btn-supprimer:hover {
+            background: #C0392B;
+        }
+
+        /* Messages */
+        .message {
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin: 15px 0;
+            font-weight: 600;
+            text-align: center;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .message-info {
+            background: linear-gradient(135deg, #a8edea, #fed6e3);
+            color: var(--couleur-texte);
+        }
+
+        .message-warning {
+            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+            color: #d63031;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .cache {
+            display: none !important;
+        }
+
+        /* Modal pour Google Sheets */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal-contenu {
+            background-color: var(--couleur-fond);
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: var(--ombre-forte);
+            animation: slideDown 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from { 
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            color: var(--couleur-texte);
+            font-size: 1.5em;
+        }
+
+        .btn-fermer {
+            background: none;
+            border: none;
+            font-size: 2em;
+            cursor: pointer;
+            color: #999;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+            line-height: 1;
+        }
+
+        .btn-fermer:hover {
+            color: var(--couleur-danger);
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .modal-body p {
+            margin-bottom: 15px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .modal-body ol {
+            margin-left: 20px;
+            color: #666;
+            line-height: 1.8;
+        }
+
+        .modal-body strong {
+            color: var(--couleur-texte);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .conteneur-principal {
+                padding: 20px;
+            }
+
+            .en-tete h1 {
+                font-size: 2em;
+            }
+
+            .controles {
+                flex-direction: column;
+            }
+
+            .bouton {
+                width: 100%;
+            }
+
+            table {
+                font-size: 0.85em;
+            }
+
+            th, td {
+                padding: 8px 6px;
+            }
+
+            .modal-contenu {
+                width: 95%;
+                margin: 5% auto;
+            }
+        }
+
+        /* Cellule de données avec formatage intelligent */
+        .cell-number {
+            text-align: right;
+            font-family: 'Courier New', monospace;
+        }
+
+        .cell-text {
+            text-align: left;
+        }
+
+        .cell-center {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="conteneur-principal">
+        <!-- EN-TÊTE -->
+        <div class="en-tete">
+            <h1>📸 Scanner QR Universel</h1>
+            <p>Application professeur - Compatible avec toutes les activités EPS</p>
+            <span class="badge-universel">🌟 Détection automatique des colonnes</span>
+        </div>
+
+        <!-- SECTION SCANNER -->
+        <div class="section">
+            <h2>📱 Scanner les QR Codes</h2>
+            
+            <!-- Statut -->
+            <div id="statut" class="statut-scan statut-attente">
+                ⏸️ Caméra non démarrée
+            </div>
+
+            <!-- Zone de scan vidéo -->
+            <div class="zone-scan" id="zoneVideo">
+                <video id="video" name="cameraVideo" autoplay playsinline></video>
+                <div class="overlay-scan"></div>
+                <div class="scan-line"></div>
+            </div>
+
+            <!-- Contrôles -->
+            <div class="controles">
+                <button class="bouton bouton-success" id="btnDemarrer">
+                    ▶️ Démarrer la caméra
+                </button>
+                <button class="bouton bouton-danger" id="btnArreter" disabled>
+                    ⏹️ Arrêter la caméra
+                </button>
+            </div>
+
+            <!-- Compteur -->
+            <div class="compteur">
+                <div class="compteur-item">
+                    <span class="nombre" id="compteurScans">0</span>
+                    <span class="label">QR Codes scannés</span>
+                </div>
+                <div class="compteur-item">
+                    <span class="nombre" id="compteurColonnes">0</span>
+                    <span class="label">Colonnes détectées</span>
+                </div>
+                <div class="compteur-item">
+                    <span class="nombre" id="compteurCooldown">0</span>
+                    <span class="label">Secondes avant prochain</span>
+                </div>
+            </div>
+
+            <div id="messageInfo" class="message message-info cache">
+                💡 Positionnez le QR code dans le cadre vert - Toutes les applications EPS sont compatibles !
+            </div>
+
+            <div id="infoColonnes" class="info-colonnes cache">
+                📊 En attente du premier scan pour détecter les colonnes...
+            </div>
+        </div>
+
+        <!-- SECTION DONNÉES COLLECTÉES -->
+        <div class="section">
+            <h2>📊 Données collectées</h2>
+            
+            <div class="controles" style="margin-bottom: 20px;">
+                <button class="bouton bouton-excel" id="btnExportExcel">
+                    📗 Exporter en Excel (.xlsx)
+                </button>
+                <button class="bouton bouton-sheets" id="btnExportSheets">
+                    📊 Exporter vers Google Sheets
+                </button>
+                <button class="bouton bouton-danger" id="btnEffacer">
+                    🗑️ Effacer toutes les données
+                </button>
+            </div>
+
+            <div class="table-container">
+                <table id="tableauDonnees">
+                    <thead id="tableauEntetes">
+                        <tr>
+                            <th>#</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpsTableau">
+                        <tr>
+                            <td colspan="2" style="text-align: center; padding: 30px; color: #999;">
+                                🎯 Aucune donnée scannée pour le moment<br>
+                                <small>Scannez un QR code pour commencer - Les colonnes s'adapteront automatiquement</small>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL GOOGLE SHEETS -->
+    <div id="modalSheets" class="modal">
+        <div class="modal-contenu">
+            <div class="modal-header">
+                <h3>📊 Export Google Sheets</h3>
+                <button class="btn-fermer" id="btnFermerModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Instructions pour exporter vers Google Sheets :</strong></p>
+                <ol>
+                    <li>Cliquez sur le bouton ci-dessous pour télécharger le fichier Excel</li>
+                    <li>Ouvrez <strong>Google Drive</strong> sur votre appareil</li>
+                    <li>Cliquez sur <strong>"+ Nouveau"</strong> puis <strong>"Importer un fichier"</strong></li>
+                    <li>Sélectionnez le fichier téléchargé</li>
+                    <li>Une fois importé, faites clic droit sur le fichier</li>
+                    <li>Choisissez <strong>"Ouvrir avec" → "Google Sheets"</strong></li>
+                </ol>
+                <p style="margin-top: 20px; color: var(--couleur-warning);">
+                    💡 <strong>Astuce :</strong> Le fichier sera automatiquement converti en Google Sheets !
+                </p>
+            </div>
+            <div style="text-align: center;">
+                <button class="bouton bouton-excel" id="btnModalExport">
+                    📥 Télécharger le fichier Excel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bibliothèques -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+
+    <script>
+        /* ========================================
+           VARIABLES GLOBALES
+           ======================================== */
+        let video = document.getElementById('video');
+        let stream = null;
+        let scanActif = false;
+        let cooldownActif = false;
+        let cooldownSecondes = 2;
+        let donnees = [];
+        let colonnes = []; // Colonnes détectées automatiquement
+        let dernierQRCode = '';
+        let compteurScans = 0;
+
+        /* ========================================
+           DÉMARRAGE DE LA CAMÉRA
+           ======================================== */
+        async function demarrerCamera() {
+            try {
+                const constraints = {
+                    video: {
+                        facingMode: { ideal: 'environment' },
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                };
+
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+                
+                await video.play();
+                
+                scanActif = true;
+                document.getElementById('btnDemarrer').disabled = true;
+                document.getElementById('btnArreter').disabled = false;
+                
+                updateStatut('🔍 Scan actif - Approchez un QR code', 'statut-scan-actif');
+                document.getElementById('messageInfo').classList.remove('cache');
+                document.getElementById('infoColonnes').classList.remove('cache');
+                
+                requestAnimationFrame(scannerQRCode);
+                
+            } catch (error) {
+                console.error('Erreur caméra:', error);
+                alert('❌ Impossible d\'accéder à la caméra. Vérifiez les permissions.');
+            }
+        }
+
+        /* ========================================
+           ARRÊT DE LA CAMÉRA
+           ======================================== */
+        function arreterCamera() {
+            scanActif = false;
+            
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+            }
+            
+            document.getElementById('btnDemarrer').disabled = false;
+            document.getElementById('btnArreter').disabled = true;
+            
+            updateStatut('⏸️ Caméra arrêtée', 'statut-attente');
+            document.getElementById('messageInfo').classList.add('cache');
+        }
+
+        /* ========================================
+           SCANNER LE QR CODE
+           ======================================== */
+        function scannerQRCode() {
+            if (!scanActif) return;
+
+            if (video.readyState === video.HAVE_ENOUGH_DATA && !cooldownActif) {
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: "attemptBoth",
+                });
+
+                if (code && code.data) {
+                    console.log('QR Code détecté:', code.data.substring(0, 100) + '...');
+                    
+                    if (code.data !== dernierQRCode) {
+                        traiterQRCode(code.data);
+                        dernierQRCode = code.data;
+                        activerCooldown();
+                    }
+                }
+            }
+
+            requestAnimationFrame(scannerQRCode);
+        }
+
+        /* ========================================
+           TRAITER LES DONNÉES DU QR CODE (UNIVERSEL)
+           ======================================== */
+        function traiterQRCode(csvData) {
+            try {
+                console.log('Données brutes du QR:', csvData);
+                
+                const lignes = csvData.trim().split('\n');
+                
+                if (lignes.length < 2) {
+                    throw new Error('Format CSV invalide - moins de 2 lignes');
+                }
+
+                // Détecter le séparateur (virgule ou point-virgule)
+                const detecterSeparateur = (ligne) => {
+                    const virgules = (ligne.match(/,/g) || []).length;
+                    const pointVirgules = (ligne.match(/;/g) || []).length;
+                    return pointVirgules > virgules ? ';' : ',';
+                };
+
+                const separateur = detecterSeparateur(lignes[0]);
+                console.log('🔍 Séparateur détecté:', separateur === ',' ? 'virgule (,)' : 'point-virgule (;)');
+
+                // Parser CSV correctement (gérer les guillemets et le séparateur)
+                function parseCSVLine(line) {
+                    const result = [];
+                    let current = '';
+                    let inQuotes = false;
+                    
+                    for (let i = 0; i < line.length; i++) {
+                        const char = line[i];
+                        
+                        if (char === '"') {
+                            inQuotes = !inQuotes;
+                        } else if (char === separateur && !inQuotes) {
+                            result.push(current.trim());
+                            current = '';
+                        } else {
+                            current += char;
+                        }
+                    }
+                    result.push(current.trim());
+                    return result;
+                }
+
+                const entetes = parseCSVLine(lignes[0]);
+                const valeurs = parseCSVLine(lignes[1]);
+
+                console.log('En-têtes détectés:', entetes);
+                console.log('Valeurs:', valeurs);
+
+                // Si c'est le premier scan, initialiser les colonnes
+                if (colonnes.length === 0) {
+                    colonnes = entetes.map(e => e.trim());
+                    genererEntetes();
+                    document.getElementById('infoColonnes').innerHTML = 
+                        `✅ <strong>${colonnes.length} colonnes détectées</strong> : ${colonnes.join(', ')}`;
+                    document.getElementById('compteurColonnes').textContent = colonnes.length;
+                } else {
+                    // Vérifier que les colonnes correspondent
+                    if (entetes.length !== colonnes.length) {
+                        throw new Error(`Nombre de colonnes incompatible : attendu ${colonnes.length}, reçu ${entetes.length}`);
+                    }
+                }
+
+                // Créer l'objet de données
+                const ligne = {};
+                colonnes.forEach((colonne, index) => {
+                    const valeur = valeurs[index] ? valeurs[index].replace(/^"|"$/g, '').trim() : '';
+                    ligne[colonne] = valeur;
+                });
+
+                console.log('Ligne parsée:', ligne);
+
+                donnees.push(ligne);
+                compteurScans++;
+                
+                document.getElementById('compteurScans').textContent = compteurScans;
+                updateStatut('✅ QR Code scanné avec succès !', 'statut-success');
+                
+                afficherDonnees();
+                playSuccessSound();
+                sauvegarderDonnees();
+                
+            } catch (error) {
+                console.error('Erreur parsing:', error);
+                updateStatut('❌ Erreur: ' + error.message, 'statut-warning');
+                
+                setTimeout(() => {
+                    alert('Erreur de lecture du QR Code.\n\nDétails: ' + error.message + '\n\nVérifiez que le QR Code a été généré correctement.');
+                }, 500);
+            }
+        }
+
+        /* ========================================
+           GÉNÉRER LES EN-TÊTES DYNAMIQUEMENT
+           ======================================== */
+        function genererEntetes() {
+            const thead = document.getElementById('tableauEntetes');
+            thead.innerHTML = '<tr><th>#</th>';
+            
+            colonnes.forEach(colonne => {
+                thead.innerHTML += `<th>${colonne}</th>`;
+            });
+            
+            thead.innerHTML += '<th>Actions</th></tr>';
+        }
+
+        /* ========================================
+           ACTIVER LE COOLDOWN
+           ======================================== */
+        function activerCooldown() {
+            cooldownActif = true;
+            let secondesRestantes = cooldownSecondes;
+            
+            document.getElementById('compteurCooldown').textContent = secondesRestantes;
+            updateStatut(`⏳ Veuillez attendre ${secondesRestantes}s avant le prochain scan`, 'statut-cooldown');
+
+            const intervalCooldown = setInterval(() => {
+                secondesRestantes--;
+                document.getElementById('compteurCooldown').textContent = secondesRestantes;
+                
+                if (secondesRestantes > 0) {
+                    updateStatut(`⏳ Veuillez attendre ${secondesRestantes}s avant le prochain scan`, 'statut-cooldown');
+                } else {
+                    clearInterval(intervalCooldown);
+                    cooldownActif = false;
+                    dernierQRCode = '';
+                    document.getElementById('compteurCooldown').textContent = '0';
+                    updateStatut('🔍 Prêt pour le prochain scan', 'statut-scan-actif');
+                }
+            }, 1000);
+        }
+
+        /* ========================================
+           AFFICHER LES DONNÉES DANS LE TABLEAU
+           ======================================== */
+        function afficherDonnees() {
+            const tbody = document.getElementById('corpsTableau');
+            tbody.innerHTML = '';
+
+            if (donnees.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="${colonnes.length + 2}" style="text-align: center; padding: 30px; color: #999;">
+                            🎯 Aucune donnée scannée pour le moment<br>
+                            <small>Scannez un QR code pour commencer - Les colonnes s'adapteront automatiquement</small>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            donnees.forEach((ligne, index) => {
+                const tr = document.createElement('tr');
+                
+                // Numéro de ligne
+                let html = `<td style="text-align: center; font-weight: bold;">${index + 1}</td>`;
+                
+                // Données de chaque colonne
+                colonnes.forEach(colonne => {
+                    const valeur = ligne[colonne] || '';
+                    
+                    // Détecter si c'est un nombre
+                    const estNombre = !isNaN(valeur) && valeur !== '' && valeur.match(/^-?\d+\.?\d*$/);
+                    const classe = estNombre ? 'cell-number' : 'cell-text';
+                    
+                    html += `<td class="${classe}">${valeur}</td>`;
+                });
+                
+                // Actions
+                html += `
+                    <td>
+                        <div class="actions-cellule">
+                            <button class="btn-mini btn-supprimer" data-index="${index}">
+                                🗑️
+                            </button>
+                        </div>
+                    </td>
+                `;
+                
+                tr.innerHTML = html;
+                
+                // Ajouter l'événement de suppression
+                const btnSupprimer = tr.querySelector('.btn-supprimer');
+                btnSupprimer.addEventListener('click', function() {
+                    supprimerLigne(parseInt(this.getAttribute('data-index')));
+                });
+                
+                tbody.appendChild(tr);
+            });
+        }
+
+        /* ========================================
+           SUPPRIMER UNE LIGNE
+           ======================================== */
+        function supprimerLigne(index) {
+            if (confirm('Voulez-vous vraiment supprimer cette ligne ?')) {
+                donnees.splice(index, 1);
+                compteurScans--;
+                document.getElementById('compteurScans').textContent = compteurScans;
+                afficherDonnees();
+                sauvegarderDonnees();
+            }
+        }
+
+        /* ========================================
+           EFFACER TOUTES LES DONNÉES
+           ======================================== */
+        function effacerDonnees() {
+            if (confirm('⚠️ Attention ! Voulez-vous vraiment effacer toutes les données scannées ?\n\nCela réinitialisera également la détection des colonnes.')) {
+                donnees = [];
+                colonnes = [];
+                compteurScans = 0;
+                document.getElementById('compteurScans').textContent = '0';
+                document.getElementById('compteurColonnes').textContent = '0';
+                document.getElementById('infoColonnes').innerHTML = 
+                    '📊 En attente du premier scan pour détecter les colonnes...';
+                
+                // Réinitialiser les en-têtes
+                const thead = document.getElementById('tableauEntetes');
+                thead.innerHTML = '<tr><th>#</th><th>Actions</th></tr>';
+                
+                afficherDonnees();
+                localStorage.removeItem('scannerUniversel');
+                updateStatut('🗑️ Toutes les données ont été effacées', 'statut-warning');
+            }
+        }
+
+        /* ========================================
+           EXPORTER EN EXCEL (.XLSX)
+           ======================================== */
+        function exporterExcel() {
+            if (donnees.length === 0) {
+                alert('❌ Aucune donnée à exporter');
+                return;
+            }
+
+            // Créer le workbook
+            const wb = XLSX.utils.book_new();
+            
+            // Préparer les données pour Excel avec numérotation
+            const donneesExcel = donnees.map((ligne, index) => {
+                const nouvelleLigne = { '#': index + 1 };
+                colonnes.forEach(colonne => {
+                    nouvelleLigne[colonne] = ligne[colonne] || '';
+                });
+                return nouvelleLigne;
+            });
+
+            // Créer la feuille
+            const ws = XLSX.utils.json_to_sheet(donneesExcel);
+
+            // Définir la largeur des colonnes automatiquement
+            const colWidths = [{ wch: 5 }]; // # colonne
+            colonnes.forEach(colonne => {
+                const maxLength = Math.max(
+                    colonne.length,
+                    ...donnees.map(ligne => (ligne[colonne] || '').toString().length)
+                );
+                colWidths.push({ wch: Math.min(maxLength + 2, 40) });
+            });
+            ws['!cols'] = colWidths;
+
+            // Ajouter la feuille au workbook
+            XLSX.utils.book_append_sheet(wb, ws, 'Données');
+
+            // Générer le fichier et le télécharger
+            const nomFichier = `export_eps_${new Date().toISOString().slice(0,10)}_${new Date().getTime()}.xlsx`;
+            XLSX.writeFile(wb, nomFichier);
+
+            updateStatut('📗 Fichier Excel téléchargé avec succès !', 'statut-success');
+            
+            setTimeout(() => {
+                if (scanActif) {
+                    updateStatut('🔍 Prêt pour le prochain scan', 'statut-scan-actif');
+                }
+            }, 3000);
+        }
+
+        /* ========================================
+           MODAL GOOGLE SHEETS
+           ======================================== */
+        function ouvrirModalSheets() {
+            if (donnees.length === 0) {
+                alert('❌ Aucune donnée à exporter');
+                return;
+            }
+            document.getElementById('modalSheets').style.display = 'block';
+        }
+
+        function fermerModalSheets() {
+            document.getElementById('modalSheets').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('modalSheets');
+            if (event.target == modal) {
+                fermerModalSheets();
+            }
+        }
+
+        /* ========================================
+           SAUVEGARDER LES DONNÉES DANS LOCALSTORAGE
+           ======================================== */
+        function sauvegarderDonnees() {
+            localStorage.setItem('scannerUniversel', JSON.stringify({
+                donnees: donnees,
+                colonnes: colonnes,
+                compteur: compteurScans
+            }));
+        }
+
+        /* ========================================
+           CHARGER LES DONNÉES AU DÉMARRAGE
+           ======================================== */
+        function chargerDonnees() {
+            const stockage = localStorage.getItem('scannerUniversel');
+            if (stockage) {
+                const data = JSON.parse(stockage);
+                donnees = data.donnees || [];
+                colonnes = data.colonnes || [];
+                compteurScans = data.compteur || 0;
+                
+                document.getElementById('compteurScans').textContent = compteurScans;
+                document.getElementById('compteurColonnes').textContent = colonnes.length;
+                
+                if (colonnes.length > 0) {
+                    genererEntetes();
+                    document.getElementById('infoColonnes').innerHTML = 
+                        `✅ <strong>${colonnes.length} colonnes chargées</strong> : ${colonnes.join(', ')}`;
+                    document.getElementById('infoColonnes').classList.remove('cache');
+                }
+                
+                afficherDonnees();
+            }
+        }
+
+        /* ========================================
+           METTRE À JOUR LE STATUT
+           ======================================== */
+        function updateStatut(texte, classe) {
+            const statut = document.getElementById('statut');
+            statut.textContent = texte;
+            statut.className = 'statut-scan ' + classe;
+        }
+
+        /* ========================================
+           SON DE SUCCÈS
+           ======================================== */
+        function playSuccessSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.2);
+            } catch (error) {
+                console.log('Son non disponible');
+            }
+        }
+
+        /* ========================================
+           INITIALISATION AU CHARGEMENT
+           ======================================== */
+        document.addEventListener('DOMContentLoaded', function() {
+            // Charger les données sauvegardées
+            chargerDonnees();
+            
+            // Attacher les événements aux boutons de caméra
+            document.getElementById('btnDemarrer').addEventListener('click', demarrerCamera);
+            document.getElementById('btnArreter').addEventListener('click', arreterCamera);
+            
+            // Attacher les événements aux boutons d'export
+            document.getElementById('btnExportExcel').addEventListener('click', exporterExcel);
+            document.getElementById('btnExportSheets').addEventListener('click', ouvrirModalSheets);
+            document.getElementById('btnEffacer').addEventListener('click', effacerDonnees);
+            
+            // Attacher les événements au modal
+            document.getElementById('btnFermerModal').addEventListener('click', fermerModalSheets);
+            document.getElementById('btnModalExport').addEventListener('click', function() {
+                exporterExcel();
+                fermerModalSheets();
+            });
+            
+            // Sauvegarder automatiquement lors de la fermeture
+            window.addEventListener('beforeunload', function() {
+                sauvegarderDonnees();
+            });
+            
+            console.log('Scanner universel initialisé ✅');
+        });
+    </script>
+</body>
+</html>
