@@ -573,12 +573,155 @@
         .cell-center {
             text-align: center;
         }
+
+        /* ── Bouton aide ── */
+        .btn-aide {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--couleur-primaire), var(--couleur-secondaire));
+            color: #fff;
+            border: none;
+            font-size: 1.4em;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: var(--ombre-douce);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+            z-index: 10;
+        }
+        .btn-aide:hover { transform: scale(1.12); box-shadow: var(--ombre-forte); }
+
+        /* ── Modale aide ── */
+        .modal-aide {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            background: rgba(0,0,0,0.55);
+            overflow-y: auto;
+            animation: fadeIn 0.25s;
+        }
+        .modal-aide-contenu {
+            background: var(--couleur-fond);
+            margin: 20px auto;
+            padding: 32px 28px 24px;
+            border-radius: 20px;
+            width: 92%;
+            max-width: 680px;
+            box-shadow: var(--ombre-forte);
+            animation: slideDown 0.25s;
+            position: relative;
+        }
+        .modal-aide-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 22px;
+            border-bottom: 3px solid var(--couleur-primaire);
+            padding-bottom: 14px;
+        }
+        .modal-aide-header h2 {
+            font-size: 1.5em;
+            background: linear-gradient(135deg, var(--couleur-primaire), var(--couleur-secondaire));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.3;
+        }
+        .modal-aide-fermer {
+            background: none;
+            border: none;
+            font-size: 2em;
+            cursor: pointer;
+            color: #999;
+            line-height: 1;
+            padding: 0 4px;
+            flex-shrink: 0;
+        }
+        .modal-aide-fermer:hover { color: var(--couleur-danger); }
+
+        /* Sections aide */
+        .aide-section {
+            margin-bottom: 22px;
+        }
+        .aide-section h3 {
+            font-size: 1.05em;
+            color: var(--couleur-primaire);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+        .aide-section p, .aide-section li {
+            color: #555;
+            font-size: 0.95em;
+            line-height: 1.65;
+        }
+        .aide-section ul, .aide-section ol {
+            margin-left: 20px;
+        }
+        .aide-section li { margin-bottom: 5px; }
+
+        /* Badges apps compatibles */
+        .aide-apps {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 8px;
+        }
+        .aide-app-badge {
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 0.88em;
+            font-weight: 600;
+            color: #fff;
+        }
+        .badge-vbeps    { background: linear-gradient(135deg, #7c3aed, #a78bfa); }
+        .badge-biathlon { background: linear-gradient(135deg, #0ea5e9, #38bdf8); }
+        .badge-laser    { background: linear-gradient(135deg, #f97316, #fb923c); }
+
+        /* Encadrés install */
+        .aide-install {
+            background: #f0fdf4;
+            border-left: 4px solid var(--couleur-success);
+            border-radius: 0 10px 10px 0;
+            padding: 12px 16px;
+            margin-top: 8px;
+        }
+        .aide-install.ios {
+            background: #f0f9ff;
+            border-left-color: #0ea5e9;
+        }
+        .aide-install strong { color: var(--couleur-texte); }
+
+        /* Pied de modale */
+        .aide-footer {
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+            font-size: 0.85em;
+            color: #999;
+        }
+        .aide-footer strong { color: var(--couleur-primaire); }
+
+        @media (max-width: 600px) {
+            .modal-aide-contenu { padding: 22px 16px 18px; margin: 10px auto; }
+            .modal-aide-header h2 { font-size: 1.2em; }
+        }
     </style>
 </head>
 <body>
     <div class="conteneur-principal">
         <!-- EN-TÊTE -->
-        <div class="en-tete">
+        <div class="en-tete" style="position:relative;">
+            <button class="btn-aide" id="btnAide" title="Aide &amp; informations" aria-label="Aide">?</button>
             <h1>📸 Scanner QR Universel</h1>
             <p>Application professeur - Compatible avec toutes les activités EPS</p>
             <span class="badge-universel">🌟 Détection automatique des colonnes</span>
@@ -836,7 +979,12 @@
             const lignes = texte.trim().split('\n').filter(l => l.trim());
             if (lignes.length < 2) throw new Error('CSV invalide — au moins 2 lignes attendues');
 
-            const detecterSep = l => (l.match(/;/g) || []).length >= (l.match(/,/g) || []).length ? ';' : ',';
+            const detecterSep = l => {
+                const t = (l.match(/\t/g)||[]).length;
+                const p = (l.match(/;/g) ||[]).length;
+                const v = (l.match(/,/g) ||[]).length;
+                return t > p && t > v ? '\t' : p >= v ? ';' : ',';
+            };
             const sep = detecterSep(lignes[0]);
 
             const splitLigne = ligne => {
@@ -1349,8 +1497,153 @@
             });
             
             console.log('Scanner universel initialisé ✅');
+
+        /* ── Aide ── */
+        document.getElementById('btnAide').addEventListener('click', () => {
+            document.getElementById('modalAide').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        });
+        function fermerAide() {
+            document.getElementById('modalAide').style.display = 'none';
+            document.body.style.overflow = '';
+        }
+        document.getElementById('btnFermerAide').addEventListener('click', fermerAide);
+        document.getElementById('modalAide').addEventListener('click', e => {
+            if (e.target === document.getElementById('modalAide')) fermerAide();
+        });
+
         });
     </script>
+
+    <!-- ══════════════ MODALE AIDE ══════════════ -->
+    <div id="modalAide" class="modal-aide" role="dialog" aria-modal="true" aria-labelledby="aideTitle">
+        <div class="modal-aide-contenu">
+            <div class="modal-aide-header">
+                <h2 id="aideTitle">📖 Guide SCAN EPS</h2>
+                <button class="modal-aide-fermer" id="btnFermerAide" aria-label="Fermer">&times;</button>
+            </div>
+
+            <!-- À propos -->
+            <div class="aide-section">
+                <h3>🎯 À quoi sert cette application ?</h3>
+                <p>
+                    <strong>SCAN EPS</strong> est un scanner universel de QR codes destiné aux professeurs d'EPS.
+                    Il permet de collecter rapidement les résultats des élèves générés par les applications
+                    d'évaluation (VB EPS, BiathlonVMA, LaserFit…) en scannant leurs QR codes depuis la tablette du professeur.
+                    Les données sont regroupées automatiquement dans un tableau exportable.
+                </p>
+            </div>
+
+            <!-- Apps compatibles -->
+            <div class="aide-section">
+                <h3>📲 Applications compatibles</h3>
+                <div class="aide-apps">
+                    <span class="aide-app-badge badge-vbeps">🏐 VB EPS — Volleyball</span>
+                    <span class="aide-app-badge badge-biathlon">🏃 BiathlonVMA</span>
+                    <span class="aide-app-badge badge-laser">🏋️ LaserFit</span>
+                </div>
+                <p style="margin-top:10px;">
+                    Toute autre application générant un QR code au format CSV ou JSON est également prise en charge automatiquement.
+                </p>
+            </div>
+
+            <!-- Fonctionnalités -->
+            <div class="aide-section">
+                <h3>⚡ Fonctionnalités</h3>
+                <ul>
+                    <li><strong>Multi-lignes</strong> : un seul QR code peut contenir jusqu'à <strong>5 enregistrements</strong> (ex. 5 joueurs VB EPS) — tous sont importés en une seule passe.</li>
+                    <li><strong>Colonnes illimitées</strong> : le scanner s'adapte automatiquement au nombre de colonnes (LaserFit peut en générer 15+).</li>
+                    <li><strong>3 formats reconnus automatiquement</strong> : CSV standard, JSON compact (BiathlonVMA), multi-lignes avec préfixe (VB EPS).</li>
+                    <li><strong>Fusion des formats</strong> : vous pouvez scanner des QR codes de différentes applications dans la même session — les colonnes sont fusionnées sans erreur.</li>
+                    <li><strong>Export CSV</strong> : compatible Excel français (séparateur <code>;</code>, encodage UTF-8).</li>
+                    <li><strong>100 % hors ligne</strong> : fonctionne sans connexion internet une fois installée.</li>
+                    <li><strong>Sauvegarde automatique</strong> : les données sont conservées même si vous fermez l'application.</li>
+                </ul>
+            </div>
+
+            <!-- Installation Android -->
+            <div class="aide-section">
+                <h3>🤖 Installation sur Android</h3>
+                <div class="aide-install">
+                    <strong>Option 1 — via le fichier APK :</strong>
+                    <ol style="margin-top:6px;">
+                        <li>Téléchargez le fichier <strong>SCANEPS.apk</strong> sur la tablette.</li>
+                        <li>Ouvrez le fichier téléchargé — Android vous demande d'autoriser les sources inconnues : acceptez.</li>
+                        <li>Appuyez sur <strong>Installer</strong> puis <strong>Ouvrir</strong>.</li>
+                    </ol>
+                </div>
+                <div class="aide-install" style="margin-top:10px;">
+                    <strong>Option 2 — via Chrome (PWA) :</strong>
+                    <ol style="margin-top:6px;">
+                        <li>Ouvrez <strong>Chrome</strong> et rendez-vous sur :<br>
+                            <code style="font-size:0.85em;">https://msjeps.github.io/scaneps/</code></li>
+                        <li>Appuyez sur les <strong>⋮ trois points</strong> en haut à droite.</li>
+                        <li>Choisissez <strong>« Ajouter à l'écran d'accueil »</strong>.</li>
+                        <li>L'application apparaît sur l'écran d'accueil comme une app native.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Installation iPhone / iPad -->
+            <div class="aide-section">
+                <h3>🍎 Installation sur iPhone / iPad</h3>
+                <div class="aide-install ios">
+                    <strong>Via Safari (obligatoire sur iOS) :</strong>
+                    <ol style="margin-top:6px;">
+                        <li>Ouvrez <strong>Safari</strong> (pas Chrome ni Firefox) et rendez-vous sur :<br>
+                            <code style="font-size:0.85em;">https://msjeps.github.io/scaneps/</code></li>
+                        <li>Appuyez sur l'icône <strong>Partager</strong> <span style="font-size:1.1em;">⬆</span> en bas de l'écran.</li>
+                        <li>Faites défiler et choisissez <strong>« Sur l'écran d'accueil »</strong>.</li>
+                        <li>Confirmez avec <strong>Ajouter</strong> — l'icône SCAN EPS apparaît sur votre écran d'accueil.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Utilisation -->
+            <div class="aide-section">
+                <h3>📋 Utilisation rapide</h3>
+                <ol>
+                    <li>Appuyez sur <strong>▶ Démarrer la caméra</strong>.</li>
+                    <li>Présentez le QR code de l'élève dans le cadre vert.</li>
+                    <li>Le scan se déclenche automatiquement — attendez le bip de confirmation.</li>
+                    <li>Scannez les QR codes suivants (délai de 2 s entre chaque).</li>
+                    <li>Appuyez sur <strong>📄 Exporter en CSV</strong> pour récupérer les données dans Excel ou Google Sheets.</li>
+                </ol>
+            </div>
+
+            <!-- Pied -->
+            <div class="aide-footer">
+                <!-- Convention de format -->
+                <div class="aide-section" style="margin-bottom:16px;">
+                    <h3>🔌 Intégrer une nouvelle application</h3>
+                    <p>Toute application peut être rendue compatible avec SCAN EPS en respectant
+                    la <strong>convention de format CSV EPS</strong> :</p>
+                    <div style="background:#1e1e2e;color:#cdd6f4;border-radius:10px;padding:14px 16px;margin:10px 0;font-family:'Courier New',monospace;font-size:0.85em;line-height:1.7;overflow-x:auto;">
+                        <span style="color:#a6e3a1;"># Ligne 1 — en-têtes (obligatoire)</span><br>
+                        Nom;Prénom;Classe;Score;Date<br>
+                        <span style="color:#a6e3a1;"># Lignes 2 à N — données (1 élève par ligne)</span><br>
+                        Alice;Martin;3A;42;26/02/2026<br>
+                        Bob;Dupont;3A;38;26/02/2026
+                    </div>
+                    <ul>
+                        <li>Séparateurs acceptés : <code>;</code> (recommandé) &nbsp;·&nbsp; <code>,</code> &nbsp;·&nbsp; <code>tabulation</code></li>
+                        <li>Encodage : UTF-8</li>
+                        <li>Nombre de colonnes : illimité</li>
+                        <li>Nombre de lignes par QR : jusqu'à la limite du QR code (~2 000 caractères)</li>
+                        <li>Les guillemets sont supportés pour les valeurs contenant le séparateur</li>
+                    </ul>
+                    <p style="margin-top:8px;">
+                        📎 Ce format est généré nativement par Excel, Google Sheets, et la majorité
+                        des frameworks web — <strong>aucune librairie spéciale n'est nécessaire</strong>.
+                    </p>
+                </div>
+
+                Application conçue par <strong>Nathalie Prenois</strong>, enseignante EPS<br>
+                Collège Mont Saint Jean &nbsp;·&nbsp; Version PWA 2025
+            </div>
+        </div>
+    </div>
+
 
     <!-- Service Worker — PWA offline -->
     <script>
