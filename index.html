@@ -814,97 +814,237 @@
             requestAnimationFrame(scannerQRCode);
         }
 
-        /* ========================================
-           TRAITER LES DONNÉES DU QR CODE (UNIVERSEL)
-           ======================================== */
-        function traiterQRCode(csvData) {
-            try {
-                console.log('Données brutes du QR:', csvData);
-                
-                const lignes = csvData.trim().split('\n');
-                
-                if (lignes.length < 2) {
-                    throw new Error('Format CSV invalide - moins de 2 lignes');
+        /* ════════════════════════════════════════════
+           DÉTECTION AUTOMATIQUE DU FORMAT QR
+           ════════════════════════════════════════════ */
+        function detecterFormat(texte) {
+            const l0 = texte.trim().split('\n')[0];
+            // JSON compact : "PREFIXE|{...}" ou "{...}"
+            if (/^[A-Z0-9]+\|\{/.test(l0) || l0.trimStart().startsWith('{')) return 'json';
+            // Multi-lignes avec préfixe : "MOT|meta" + au moins une ligne de données
+            if (/^[A-Z0-9]+\|/.test(l0) && texte.trim().split('\n').length > 1)  return 'multilignes';
+            // CSV standard (header ; data)
+            return 'csv';
+        }
+
+        /* ════════════════════════════════════════════
+           PARSER A — CSV STANDARD (LaserFit, …)
+           Ligne 0 = en-têtes, lignes 1-N = données
+           Nombre de colonnes illimité, N lignes supportées
+           ════════════════════════════════════════════ */
+        function parseCSV(texte) {
+            const lignes = texte.trim().split('\n').filter(l => l.trim());
+            if (lignes.length < 2) throw new Error('CSV invalide — au moins 2 lignes attendues');
+
+            const detecterSep = l => (l.match(/;/g) || []).length >= (l.match(/,/g) || []).length ? ';' : ',';
+            const sep = detecterSep(lignes[0]);
+
+            const splitLigne = ligne => {
+                const res = []; let cur = '', inQ = false;
+                for (const ch of ligne) {
+                    if (ch === '"') { inQ = !inQ; }
+                    else if (ch === sep && !inQ) { res.push(cur.trim()); cur = ''; }
+                    else { cur += ch; }
                 }
+                res.push(cur.trim());
+                return res.map(v => v.replace(/^"|"$/g, '').trim());
+            };
 
-                // Détecter le séparateur (virgule ou point-virgule)
-                const detecterSeparateur = (ligne) => {
-                    const virgules = (ligne.match(/,/g) || []).length;
-                    const pointVirgules = (ligne.match(/;/g) || []).length;
-                    return pointVirgules > virgules ? ';' : ',';
-                };
+            const entetes = splitLigne(lignes[0]);
+            const rows = lignes.slice(1).map(l => {
+                const vals = splitLigne(l);
+                const row = {};
+                entetes.forEach((col, i) => { row[col] = vals[i] || ''; });
+                return row;
+            });
 
-                const separateur = detecterSeparateur(lignes[0]);
-                console.log('🔍 Séparateur détecté:', separateur === ',' ? 'virgule (,)' : 'point-virgule (;)');
+            return { cols: entetes, rows, source: 'CSV' };
+        }
 
-                // Parser CSV correctement (gérer les guillemets et le séparateur)
-                function parseCSVLine(line) {
-                    const result = [];
-                    let current = '';
-                    let inQuotes = false;
-                    
-                    for (let i = 0; i < line.length; i++) {
-                        const char = line[i];
-                        
-                        if (char === '"') {
-                            inQuotes = !inQuotes;
-                        } else if (char === separateur && !inQuotes) {
-                            result.push(current.trim());
-                            current = '';
-                        } else {
-                            current += char;
-                        }
-                    }
-                    result.push(current.trim());
-                    return result;
+        /* ════════════════════════════════════════════
+           PARSER B — JSON COMPACT (BiathlonVMA BJ1|{…})
+           Gère tout format PREFIXE|{json}
+           Formats connus → noms lisibles
+           Formats inconnus → clés brutes du JSON aplaties
+           ════════════════════════════════════════════ */
+        function parseJSON(texte) {
+            const pipe    = texte.indexOf('|');
+            const prefix  = pipe >= 0 ? texte.substring(0, pipe) : 'JSON';
+            const jsonStr = pipe >= 0 ? texte.substring(pipe + 1) : texte;
+            let data;
+            try { data = JSON.parse(jsonStr); }
+            catch(e) { throw new Error('JSON invalide : ' + e.message); }
+
+            // ── Schémas connus ─────────────────────────────────────────────
+            const SCHEMAS = {
+                BJ1: {  // BiathlonVMA
+                    label: 'BiathlonVMA',
+                    scalaires: {
+                        d:'Date', c:'Coureur', o:'Observateur', cl:'Classe',
+                        vm:'VMA (km/h)', dt:'Dist. théo. (m)', dr:'Dist. réelle (m)',
+                        sc:'Score course', st:'Score tirs'
+                    },
+                    tableaux: {
+                        cs: arr => (arr||[]).map((c,i) => `C${i+1}: ${c[3]}m/${c[2]}m (${c[5]}pts)`).join(' | '),
+                        ts: arr => (arr||[]).join(', ')
+                    },
+                    labelTableaux: { cs:'Détail courses', ts:'Détail tirs' }
                 }
+            };
 
-                const entetes = parseCSVLine(lignes[0]);
-                const valeurs = parseCSVLine(lignes[1]);
-
-                console.log('En-têtes détectés:', entetes);
-                console.log('Valeurs:', valeurs);
-
-                // Si c'est le premier scan, initialiser les colonnes
-                if (colonnes.length === 0) {
-                    colonnes = entetes.map(e => e.trim());
-                    genererEntetes();
-                    document.getElementById('infoColonnes').innerHTML = 
-                        `✅ <strong>${colonnes.length} colonnes détectées</strong> : ${colonnes.join(', ')}`;
-                    document.getElementById('compteurColonnes').textContent = colonnes.length;
-                } else {
-                    // Vérifier que les colonnes correspondent
-                    if (entetes.length !== colonnes.length) {
-                        throw new Error(`Nombre de colonnes incompatible : attendu ${colonnes.length}, reçu ${entetes.length}`);
-                    }
-                }
-
-                // Créer l'objet de données
-                const ligne = {};
-                colonnes.forEach((colonne, index) => {
-                    const valeur = valeurs[index] ? valeurs[index].replace(/^"|"$/g, '').trim() : '';
-                    ligne[colonne] = valeur;
+            const schema = SCHEMAS[prefix];
+            if (schema) {
+                const cols = ['Application', ...Object.values(schema.scalaires)];
+                Object.keys(schema.tableaux).forEach(k => {
+                    if (data[k] && data[k].length) cols.push(schema.labelTableaux[k]);
                 });
+                const row = { Application: schema.label };
+                Object.entries(schema.scalaires).forEach(([k, lbl]) => {
+                    row[lbl] = data[k] !== undefined ? String(data[k]) : '';
+                });
+                Object.entries(schema.tableaux).forEach(([k, fn]) => {
+                    if (data[k] && data[k].length) row[schema.labelTableaux[k]] = fn(data[k]);
+                });
+                return { cols, rows: [row], source: schema.label };
+            }
 
-                console.log('Ligne parsée:', ligne);
+            // ── Format JSON inconnu → clés brutes aplaties ─────────────────
+            const cols = ['Application'];
+            const row  = { Application: prefix };
+            const aplatir = (obj, pref='') => {
+                Object.entries(obj).forEach(([k, v]) => {
+                    const label = pref ? `${pref}.${k}` : k;
+                    if (v !== null && typeof v === 'object' && !Array.isArray(v)) { aplatir(v, label); }
+                    else { cols.push(label); row[label] = Array.isArray(v) ? JSON.stringify(v) : String(v ?? ''); }
+                });
+            };
+            aplatir(data);
+            return { cols, rows: [row], source: prefix };
+        }
 
-                donnees.push(ligne);
-                compteurScans++;
-                
-                document.getElementById('compteurScans').textContent = compteurScans;
-                updateStatut('✅ QR Code scanné avec succès !', 'statut-success');
-                
+        /* ════════════════════════════════════════════
+           PARSER C — MULTI-LIGNES AVEC PRÉFIXE
+           Format : APPNAME|meta1|meta2\ndata;data\ndata;data
+           Schémas connus (VBEPS) → noms de colonnes précis
+           Apps inconnues → colonnes génériques auto-générées
+           ════════════════════════════════════════════ */
+        function parseMultiLignes(texte) {
+            const lignes  = texte.trim().split('\n').filter(l => l.trim());
+            const parts0  = lignes[0].split('|');
+            const appName = parts0[0];
+            const meta    = parts0.slice(1).map(m => m.trim());
+            const dataLines = lignes.slice(1).filter(l => !l.startsWith('...'));
+            if (!dataLines.length) throw new Error(`${appName} : aucune donnée trouvée`);
+
+            // ── Schéma VB EPS ──────────────────────────────────────────────
+            if (appName === 'VBEPS') {
+                const STAT_LBL = {
+                    S:'Pts Serveur', R:'Pts Réception', V:'Pts Renvoi',
+                    S_moy:'Moy Serveur', R_moy:'Moy Réception', V_moy:'Moy Renvoi'
+                };
+                const classe = meta[0] || ''; const date = meta[1] || '';
+                const statKeys = new Set();
+                dataLines.forEach(l => l.split(';').slice(4).forEach(p => {
+                    const m = p.match(/^([SRV]):/); if (m) statKeys.add(m[1]);
+                }));
+                const cols = ['Classe','Date','Joueur','Observateur','Heure','Rôle'];
+                [...statKeys].sort().forEach(k => {
+                    cols.push(STAT_LBL[k] || `Pts ${k}`);
+                    cols.push(STAT_LBL[k+'_moy'] || `Moy ${k}`);
+                });
+                const rows = dataLines.map(l => {
+                    const p = l.split(';');
+                    const row = { Classe:classe, Date:date,
+                        Joueur:(p[0]||'').trim(), Observateur:(p[1]||'').trim(),
+                        Heure:(p[2]||'').trim(), 'Rôle':(p[3]||'').trim() };
+                    p.slice(4).forEach(stat => {
+                        const m = stat.match(/^([SRV]):(\d+)\/(.+)$/);
+                        if (m) {
+                            row[STAT_LBL[m[1]] || `Pts ${m[1]}`]       = m[2];
+                            row[STAT_LBL[m[1]+'_moy'] || `Moy ${m[1]}`] = m[3];
+                        }
+                    });
+                    return row;
+                });
+                return { cols, rows, source: 'VB EPS' };
+            }
+
+            // ── App inconnue : colonnes génériques ─────────────────────────
+            const nbDataCols = Math.max(...dataLines.map(l => l.split(';').length));
+            const metaCols   = meta.map((_, i) => `${appName} Info ${i + 1}`);
+            const dataCols   = Array.from({ length: nbDataCols }, (_, i) => `${appName} Col ${i + 1}`);
+            const cols       = ['Application', ...metaCols, ...dataCols];
+            const rows = dataLines.map(l => {
+                const vals = l.split(';').map(v => v.trim());
+                const row  = { Application: appName };
+                meta.forEach((m, i)     => { row[metaCols[i]] = m; });
+                dataCols.forEach((c, i) => { row[c] = vals[i] || ''; });
+                return row;
+            });
+            return { cols, rows, source: appName };
+        }
+
+        /* ════════════════════════════════════════════
+           FUSION DE COLONNES (multi-formats dans la même session)
+           Ajoute les nouvelles colonnes sans jamais bloquer
+           ════════════════════════════════════════════ */
+        function fusionnerColonnes(nouvellesCols) {
+            let modifie = false;
+            nouvellesCols.forEach(col => {
+                if (!colonnes.includes(col)) { colonnes.push(col); modifie = true; }
+            });
+            if (modifie) { genererEntetes(); }
+        }
+
+        /* ════════════════════════════════════════════
+           DISPATCHER PRINCIPAL — traiterQRCode()
+           ════════════════════════════════════════════ */
+        function traiterQRCode(texte) {
+            try {
+                console.log('QR brut (' + texte.length + ' car.) :', texte.substring(0, 100));
+
+                const format = detecterFormat(texte);
+                let result;
+                if      (format === 'json')        result = parseJSON(texte);
+                else if (format === 'multilignes')  result = parseMultiLignes(texte);
+                else                                result = parseCSV(texte);
+
+                const { cols, rows, source } = result;
+                console.log('Format : ' + source + ' | ' + cols.length + ' colonnes | ' + rows.length + ' ligne(s)');
+
+                // Initialisation ou fusion des colonnes
+                if (colonnes.length === 0) {
+                    colonnes = cols.slice();
+                    genererEntetes();
+                } else {
+                    fusionnerColonnes(cols);
+                }
+
+                document.getElementById('infoColonnes').innerHTML =
+                    '✅ <strong>' + colonnes.length + ' colonnes</strong> [' + source + '] : ' + colonnes.join(', ');
+                document.getElementById('infoColonnes').classList.remove('cache');
+
+                rows.forEach(row => { donnees.push(row); compteurScans++; });
+
+                document.getElementById('compteurScans').textContent    = compteurScans;
+                document.getElementById('compteurColonnes').textContent = colonnes.length;
+
+                const nb = rows.length;
+                updateStatut(
+                    '✅ ' + nb + ' enregistrement' + (nb > 1 ? 's' : '') + ' ajouté' + (nb > 1 ? 's' : '') + ' [' + source + ']',
+                    'statut-success'
+                );
+
                 afficherDonnees();
                 playSuccessSound();
                 sauvegarderDonnees();
-                
+
             } catch (error) {
                 console.error('Erreur parsing:', error);
-                updateStatut('❌ Erreur: ' + error.message, 'statut-warning');
-                
+                updateStatut('❌ ' + error.message, 'statut-warning');
                 setTimeout(() => {
-                    alert('Erreur de lecture du QR Code.\n\nDétails: ' + error.message + '\n\nVérifiez que le QR Code a été généré correctement.');
-                }, 500);
+                    alert('Erreur de lecture du QR Code.\n\nDétails : ' + error.message);
+                }, 300);
             }
         }
 
