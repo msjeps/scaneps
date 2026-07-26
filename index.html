@@ -738,7 +738,7 @@
 
             <!-- Zone de scan vidéo -->
             <div class="zone-scan" id="zoneVideo">
-                <video id="video" name="cameraVideo" autoplay playsinline></video>
+                <video id="video" name="cameraVideo" autoplay playsinline muted></video>
                 <div class="overlay-scan"></div>
                 <div class="scan-line"></div>
             </div>
@@ -1368,15 +1368,9 @@
         /* ========================================
            EXPORTER EN CSV (100% offline — pas de dépendance)
            ======================================== */
-        function exporterCSV() {
-            if (donnees.length === 0) {
-                alert('❌ Aucune donnée à exporter');
-                return;
-            }
-
+        function construireCSV() {
             // En-tête CSV avec séparateur ; (compatible Excel français)
             let csv = '#;' + colonnes.join(';') + '\n';
-
             donnees.forEach((ligne, index) => {
                 const valeurs = colonnes.map(col => {
                     const val = (ligne[col] || '').toString();
@@ -1388,18 +1382,34 @@
                 });
                 csv += (index + 1) + ';' + valeurs.join(';') + '\n';
             });
+            return csv;
+        }
 
-            // BOM UTF-8 pour Excel français
+        function exporterCSV() {
+            if (donnees.length === 0) {
+                alert('❌ Aucune donnée à exporter');
+                return;
+            }
+
+            const csv = construireCSV();
             const bom = '\uFEFF';
-            const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'export_eps_' + new Date().toISOString().slice(0, 10) + '.csv';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            const filename = 'export_eps_' + new Date().toISOString().slice(0, 10) + '.csv';
+
+            if (window.Android) {
+                // Mode APK : interface Android native → sélecteur de fichier système
+                window.Android.saveCSV(bom + csv, filename);
+            } else {
+                // Mode navigateur : téléchargement via blob URL
+                const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
 
             updateStatut('📄 Fichier CSV téléchargé avec succès !', 'statut-success');
 
@@ -1418,7 +1428,15 @@
                 alert('❌ Aucune donnée à exporter');
                 return;
             }
-            document.getElementById('modalSheets').style.display = 'block';
+            if (window.Android) {
+                // Mode APK : ouvrir le sélecteur de fichier système (Drive, stockage local…)
+                // L'utilisateur peut choisir Google Drive et sélectionner/créer un dossier
+                const csv = construireCSV();
+                const filename = 'export_eps_' + new Date().toISOString().slice(0, 10) + '.csv';
+                window.Android.openGoogleDrive('\uFEFF' + csv, filename);
+            } else {
+                document.getElementById('modalSheets').style.display = 'block';
+            }
         }
 
         function fermerModalSheets() {
