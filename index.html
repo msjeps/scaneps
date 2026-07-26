@@ -76,6 +76,26 @@
             font-size: 1.1em;
         }
 
+        .pied-page {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(128, 128, 128, 0.3);
+        }
+        .pied-page-logo {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+        .pied-page p {
+            font-size: 0.85em;
+            opacity: 0.7;
+        }
+
         .badge-universel {
             display: inline-block;
             background: linear-gradient(135deg, #f093fb, #f5576c);
@@ -173,24 +193,6 @@
             border-top: none;
         }
 
-        .scan-line {
-            position: absolute;
-            width: 280px;
-            height: 3px;
-            background: linear-gradient(90deg, transparent, var(--couleur-success), transparent);
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            animation: scanLine 2s ease-in-out infinite;
-            pointer-events: none;
-        }
-
-        @keyframes scanLine {
-            0% { top: calc(50% - 140px); }
-            50% { top: calc(50% + 140px); }
-            100% { top: calc(50% - 140px); }
-        }
-
         /* Contrôles */
         .controles {
             display: flex;
@@ -278,6 +280,11 @@
         .statut-success {
             background: linear-gradient(135deg, #84fab0, #8fd3f4);
             color: #0d47a1;
+        }
+
+        .statut-warning {
+            background: linear-gradient(135deg, #fda4af, #fecdd3);
+            color: #9f1239;
         }
 
         @keyframes pulse {
@@ -560,6 +567,29 @@
             }
         }
 
+        /* Smartphone étroit : le compteur (3 pastilles) passe en grille 3 colonnes
+           pour tenir sur une seule ligne au lieu de s'empiler verticalement */
+        @media (max-width: 480px) {
+            .compteur {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+
+            .compteur-item {
+                min-width: 0;
+                padding: 12px 6px;
+            }
+
+            .compteur-item .nombre {
+                font-size: 1.6em;
+            }
+
+            .compteur-item .label {
+                font-size: 0.7em;
+            }
+        }
+
         /* Cellule de données avec formatage intelligent */
         .cell-number {
             text-align: right;
@@ -685,6 +715,7 @@
         .badge-vbeps    { background: linear-gradient(135deg, #7c3aed, #a78bfa); }
         .badge-biathlon { background: linear-gradient(135deg, #0ea5e9, #38bdf8); }
         .badge-laser    { background: linear-gradient(135deg, #f97316, #fb923c); }
+        .badge-teneps   { background: linear-gradient(135deg, #16a34a, #4ade80); }
 
         /* Encadrés install */
         .aide-install {
@@ -722,9 +753,9 @@
         <!-- EN-TÊTE -->
         <div class="en-tete" style="position:relative;">
             <button class="btn-aide" id="btnAide" title="Aide &amp; informations" aria-label="Aide">?</button>
-            <h1>📸 Scanner QR Universel</h1>
-            <p>Application professeur - Compatible avec toutes les activités EPS</p>
-            <span class="badge-universel">🌟 Détection automatique des colonnes</span>
+            <h1>Scan EPS</h1>
+            <p>Version 1.0</p>
+            <span class="badge-universel">🌟 Scanner universel : regroupe les résultats de plusieurs élèves dans un même fichier</span>
         </div>
 
         <!-- SECTION SCANNER -->
@@ -740,7 +771,6 @@
             <div class="zone-scan" id="zoneVideo">
                 <video id="video" name="cameraVideo" autoplay playsinline muted></video>
                 <div class="overlay-scan"></div>
-                <div class="scan-line"></div>
             </div>
 
             <!-- Contrôles -->
@@ -813,6 +843,12 @@
                 </table>
             </div>
         </div>
+
+        <!-- PIED DE PAGE -->
+        <div class="pied-page">
+            <img src="logo-outils-eps.png" alt="Logo outils-eps.fr" class="pied-page-logo">
+            <p>https://outils-eps.fr par Nathalie Prenois</p>
+        </div>
     </div>
 
     <!-- MODAL GOOGLE SHEETS -->
@@ -870,6 +906,35 @@
         let colonnes = []; // Colonnes détectées automatiquement
         let dernierQRCode = '';
         let compteurScans = 0;
+        let wakeLock = null;
+
+        /* ========================================
+           WAKE LOCK — empêche le smartphone de verrouiller l'écran
+           pendant une session de scan (réacquis si l'app repasse au premier plan)
+           ======================================== */
+        async function demanderWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    wakeLock.addEventListener('release', () => { wakeLock = null; });
+                }
+            } catch (error) {
+                console.log('Wake Lock non disponible:', error.message);
+            }
+        }
+
+        function relacherWakeLock() {
+            if (wakeLock) {
+                wakeLock.release();
+                wakeLock = null;
+            }
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            if (scanActif && wakeLock === null && document.visibilityState === 'visible') {
+                demanderWakeLock();
+            }
+        });
 
         /* ========================================
            DÉMARRAGE DE LA CAMÉRA
@@ -896,7 +961,8 @@
                 updateStatut('🔍 Scan actif - Approchez un QR code', 'statut-scan-actif');
                 document.getElementById('messageInfo').classList.remove('cache');
                 document.getElementById('infoColonnes').classList.remove('cache');
-                
+
+                demanderWakeLock();
                 requestAnimationFrame(scannerQRCode);
                 
             } catch (error) {
@@ -910,12 +976,14 @@
            ======================================== */
         function arreterCamera() {
             scanActif = false;
-            
+
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
                 video.srcObject = null;
             }
-            
+
+            relacherWakeLock();
+
             document.getElementById('btnDemarrer').disabled = false;
             document.getElementById('btnArreter').disabled = true;
             
@@ -1118,6 +1186,43 @@
             const dataLines = lignes.slice(1).filter(l => !l.startsWith('...'));
             if (!dataLines.length) throw new Error(`${appName} : aucune donnée trouvée`);
 
+            // ── Schéma TEN EPS ──────────────────────────────────────────────
+            // Payload : TENEPS|nom|classe|date|Mmode
+            //   Mode bracket (M3)  : "rang;joueur" (pas de poule)
+            //   Modes poules (M1/M2) : "NomPoule:" puis "rang;joueur;pts;victoires;défaites[;bonusArbitrage]"
+            if (appName === 'TENEPS') {
+                const nomTournoi = meta[0] || '';
+                const classe     = meta[1] || '';
+                const date       = meta[2] || '';
+                let poolCourante = '';
+                const rows = [];
+                dataLines.forEach(l => {
+                    // Ligne d'en-tête de poule : pas de ';', se termine par ':' — métadonnée, pas une ligne de joueur
+                    if (!l.includes(';') && l.trim().endsWith(':')) {
+                        poolCourante = l.trim().slice(0, -1);
+                        return;
+                    }
+                    const p = l.split(';').map(v => v.trim());
+                    const row = { Tournoi: nomTournoi, Classe: classe, Date: date };
+                    if (poolCourante) row['Poule'] = poolCourante;
+                    row['Rang']   = p[0] || '';
+                    row['Joueur'] = p[1] || '';
+                    if (p.length >= 5) {
+                        row['Points']    = p[2] || '';
+                        row['Victoires'] = p[3] || '';
+                        row['Défaites']  = p[4] || '';
+                        if (p.length >= 6) row['Bonus arbitrage'] = p[5] || '';
+                    }
+                    rows.push(row);
+                });
+                const cols = ['Tournoi', 'Classe', 'Date'];
+                if (rows.some(r => 'Poule' in r))           cols.push('Poule');
+                cols.push('Rang', 'Joueur');
+                if (rows.some(r => 'Points' in r))          cols.push('Points', 'Victoires', 'Défaites');
+                if (rows.some(r => 'Bonus arbitrage' in r)) cols.push('Bonus arbitrage');
+                return { cols, rows, source: 'TEN EPS' };
+            }
+
             // ── Schéma VB EPS ──────────────────────────────────────────────
             if (appName === 'VBEPS') {
                 const STAT_LBL = {
@@ -1219,11 +1324,13 @@
 
                 afficherDonnees();
                 playSuccessSound();
+                if (navigator.vibrate) navigator.vibrate(120);
                 sauvegarderDonnees();
 
             } catch (error) {
                 console.error('Erreur parsing:', error);
                 updateStatut('❌ ' + error.message, 'statut-warning');
+                if (navigator.vibrate) navigator.vibrate([80, 60, 80]);
                 setTimeout(() => {
                     alert('Erreur de lecture du QR Code.\n\nDétails : ' + error.message);
                 }, 300);
@@ -1593,6 +1700,7 @@
                     <span class="aide-app-badge badge-vbeps">🏐 VB EPS — Volleyball</span>
                     <span class="aide-app-badge badge-biathlon">🏃 BiathlonVMA</span>
                     <span class="aide-app-badge badge-laser">🏋️ LaserFit</span>
+                    <span class="aide-app-badge badge-teneps">🎾 TEN EPS — Tennis</span>
                 </div>
                 <p style="margin-top:10px;">
                     Toute autre application générant un QR code au format CSV ou JSON est également prise en charge automatiquement.
@@ -1605,7 +1713,7 @@
                 <ul>
                     <li><strong>Multi-lignes</strong> : un seul QR code peut contenir jusqu'à <strong>5 enregistrements</strong> (ex. 5 joueurs VB EPS) — tous sont importés en une seule passe.</li>
                     <li><strong>Colonnes illimitées</strong> : le scanner s'adapte automatiquement au nombre de colonnes (LaserFit peut en générer 15+).</li>
-                    <li><strong>3 formats reconnus automatiquement</strong> : CSV standard, JSON compact (BiathlonVMA), multi-lignes avec préfixe (VB EPS).</li>
+                    <li><strong>3 formats reconnus automatiquement</strong> : CSV standard (LaserFit…), JSON compact (BiathlonVMA), multi-lignes avec préfixe (VB EPS, TEN EPS).</li>
                     <li><strong>Fusion des formats</strong> : vous pouvez scanner des QR codes de différentes applications dans la même session — les colonnes sont fusionnées sans erreur.</li>
                     <li><strong>Export CSV</strong> : compatible Excel français (séparateur <code>;</code>, encodage UTF-8).</li>
                     <li><strong>100 % hors ligne</strong> : fonctionne sans connexion internet une fois installée.</li>
@@ -1691,7 +1799,7 @@
                 </div>
 
                 Application conçue par <strong>Nathalie Prenois</strong>, enseignante EPS<br>
-                Collège Mont Saint Jean &nbsp;·&nbsp; Version PWA 2025
+                Collège Mont Saint Jean &nbsp;·&nbsp; Version 1.0
             </div>
         </div>
     </div>

@@ -13,7 +13,8 @@ const CACHE_ASSETS = [
   './icon_192.png',
   './icon_512.png',
   './icon_192_maskable.png',
-  './icon_512_maskable.png'
+  './icon_512_maskable.png',
+  './logo-outils-eps.png'
 ];
 
 /* ── INSTALL : mise en cache initiale ── */
