@@ -1,12 +1,20 @@
 # Changelog - SCAN EPS
 
+## 2026-10-24 (pont natif, bouton Retour, nom d'export - version affichée 1.1, versionCode 5)
+
+- **Faux message de succès corrigé** : en mode APK, la page n'affiche plus « téléchargé avec succès » à l'appel de `saveCSV`. Kotlin signale le vrai résultat (enregistré, annulé, trop gros > 5 Mo, contenu perdu, erreur d'écriture) via `updateStatut`, message passé par `JSONObject.quote`. L'état en attente est vidé dans tous les cas.
+- **Pont durci** : `shouldOverrideUrlLoading` limité à `appassets.androidplatform.net` ; caméra accordée seulement pour cette origine.
+- **Bouton Retour** : Kotlin délègue à `window.__androidBack()`. La page ferme d'abord la fenêtre ouverte (aide, Sheets), sinon demande « Quitter Scan EPS ? » (modale maison) si des données sont scannées ; sans donnée, l'app se ferme. Nouvelle méthode de pont `quitApp()`.
+- **Nom d'export** : `APPLICATION_CLASSE_AAAA-MM-JJ_HHhMM.csv` (ex. `TEN-EPS_3eB_2026-10-24_12h20.csv`), application et classe lues dans les données scannées ; plusieurs applications : `Multi-apps`, plus de 3 classes : `Multi-classes`, classe absente : segment omis. `:` interdit dans un nom de fichier Android, d'où `12h20`.
+- Cache `scan-eps-v9`. APK signé avec le même certificat (SHA-256 5440670f…f889). **Non testé sur tablette, non publié** (push et Release en attente de confirmation).
+
 ## 2026-10-24 (charte EPS, aide, publication - version affichée 1.1, versionCode 4)
 
 - **Charte graphique** ([DESIGN-SYSTEM-EPS.md](../DESIGN-SYSTEM-EPS.md)) : version, pied de page, police et variables CSS étaient déjà conformes. Titre et titre de l'aide : texte en dégradé transparent remplacé par une couleur unie ; boutons (`primaire`, `success`, `csv`, `sheets`, `danger`) et badge « Scanner universel » : dégradé remplacé par un fond uni (le combo `linear-gradient` + `border-radius` n'est pas rendu sur le GPU PowerVR GE8320). Non testé sur tablette.
 - **Aide** : adresse web `apps.outils-eps.fr/scaneps/` (l'ancienne `msjeps.github.io` redirige), nom de l'APK `SCANEPS-signed.apk` avec lien de téléchargement (Release GitHub « latest »), limite « 5 enregistrements » retirée (le code n'en impose aucune), avertissement de QR tronqué (`...+N obs`) documenté, LaserFit classé dans les formats multi-lignes à préfixe.
 - **Publication** : `index.html` + `sw.js` poussés sur `msjeps/scaneps` (cache `scan-eps-v7`). APK `versionCode` 4 (même certificat que le v3, installable par-dessus) publié dans la Release `v1.1` : https://github.com/msjeps/scaneps/releases/tag/v1.1. Le lien de l'aide n'est pas encore dans l'APK publié (prévu pour v1.2).
 - **Dépôt git local** créé dans `SCAN EPS/`, relié à `origin` (`msjeps/scaneps`). L'APK n'est pas versionné (il est dans la Release).
-- **À faire** : corrections du pont natif `window.Android` listées dans `todo.md` (faux message de succès à l'annulation du sélecteur, `shouldOverrideUrlLoading`, origine de la caméra...).
+- **À faire** : voir l'entrée ci-dessus (corrigé dans le code, pas encore publié).
 
 ## 2026-10-24 (audit de sécurité - correctif interne, version affichée inchangée)
 

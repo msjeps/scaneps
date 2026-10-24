@@ -1544,6 +1544,34 @@
             return csv;
         }
 
+        /* Nom du fichier exporté : APPLICATION_CLASSE_AAAA-MM-JJ_HHhMM.csv
+           (application et classe lues dans les données scannées ; ":" interdit dans un nom
+           de fichier Android, d'où "HHhMM"). */
+        function nomFichierExport() {
+            const nettoyer = v => String(v).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .trim().replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+            const valeurs = cle => {
+                const out = [];
+                donnees.forEach(ligne => {
+                    const k = Object.keys(ligne).find(x => x.toLowerCase() === cle);
+                    const v = k ? nettoyer(ligne[k]) : '';
+                    if (v && out.indexOf(v) === -1) out.push(v);
+                });
+                return out;
+            };
+            const apps = valeurs('application');
+            const classes = valeurs('classe');
+            const parties = [
+                apps.length === 0 ? 'SCAN-EPS' : (apps.length === 1 ? apps[0] : 'Multi-apps')
+            ];
+            if (classes.length > 0) parties.push(classes.length <= 3 ? classes.join('-') : 'Multi-classes');
+            const d = new Date();
+            const deux = n => (n < 10 ? '0' : '') + n;
+            parties.push(d.getFullYear() + '-' + deux(d.getMonth() + 1) + '-' + deux(d.getDate()));
+            parties.push(deux(d.getHours()) + 'h' + deux(d.getMinutes()));
+            return parties.join('_') + '.csv';
+        }
+
         function exporterCSV() {
             if (donnees.length === 0) {
                 alert('❌ Aucune donnée à exporter');
@@ -1552,11 +1580,13 @@
 
             const csv = construireCSV();
             const bom = '\uFEFF';
-            const filename = 'export_eps_' + new Date().toISOString().slice(0, 10) + '.csv';
+            const filename = nomFichierExport();
 
             if (window.Android) {
                 // Mode APK : interface Android native → sélecteur de fichier système
+                // Le résultat (enregistré, annulé, erreur) est signalé par Kotlin via updateStatut
                 window.Android.saveCSV(bom + csv, filename);
+                return;
             } else {
                 // Mode navigateur : téléchargement via blob URL
                 const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
@@ -1591,7 +1621,7 @@
                 // Mode APK : ouvrir le sélecteur de fichier système (Drive, stockage local…)
                 // L'utilisateur peut choisir Google Drive et sélectionner/créer un dossier
                 const csv = construireCSV();
-                const filename = 'export_eps_' + new Date().toISOString().slice(0, 10) + '.csv';
+                const filename = nomFichierExport();
                 window.Android.openGoogleDrive('\uFEFF' + csv, filename);
             } else {
                 document.getElementById('modalSheets').style.display = 'block';
@@ -1719,6 +1749,26 @@
             document.body.style.overflow = '';
         }
         document.getElementById('btnFermerAide').addEventListener('click', fermerAide);
+
+        /* Bouton Retour de l'APK : appelé par Kotlin. Renvoie true si la page a géré l'appui,
+           false pour laisser l'application se fermer (rien à perdre). */
+        function fermerQuitter() {
+            document.getElementById('modalQuitter').style.display = 'none';
+        }
+        document.getElementById('btnResterApp').addEventListener('click', fermerQuitter);
+        document.getElementById('btnQuitterApp').addEventListener('click', function () {
+            if (window.Android && window.Android.quitApp) window.Android.quitApp();
+        });
+        window.__androidBack = function () {
+            const quitter = document.getElementById('modalQuitter');
+            if (quitter.style.display === 'block') { fermerQuitter(); return true; }
+            const aide = document.getElementById('modalAide');
+            if (aide.style.display === 'block') { fermerAide(); return true; }
+            const sheets = document.getElementById('modalSheets');
+            if (sheets.style.display === 'block') { fermerModalSheets(); return true; }
+            if (donnees.length > 0) { quitter.style.display = 'block'; return true; }
+            return false;
+        };
         document.getElementById('modalAide').addEventListener('click', e => {
             if (e.target === document.getElementById('modalAide')) fermerAide();
         });
@@ -1727,6 +1777,17 @@
     </script>
 
     <!-- ══════════════ MODALE AIDE ══════════════ -->
+    <div id="modalQuitter" class="modal-aide" role="dialog" aria-modal="true" aria-labelledby="quitterTitre">
+        <div class="modal-aide-contenu" style="max-width:420px;">
+            <h2 id="quitterTitre" style="margin-bottom:12px;">Quitter Scan EPS ?</h2>
+            <p style="margin-bottom:20px;">Les données scannées sont sauvegardées sur la tablette : tu les retrouveras à la réouverture.</p>
+            <div style="display:flex;flex-wrap:wrap;margin:-5px;">
+                <button class="bouton bouton-primaire" id="btnResterApp" style="flex:1 1 140px;min-height:48px;margin:5px;">Rester</button>
+                <button class="bouton bouton-danger" id="btnQuitterApp" style="flex:1 1 140px;min-height:48px;margin:5px;">Quitter</button>
+            </div>
+        </div>
+    </div>
+
     <div id="modalAide" class="modal-aide" role="dialog" aria-modal="true" aria-labelledby="aideTitle">
         <div class="modal-aide-contenu">
             <div class="modal-aide-header">
