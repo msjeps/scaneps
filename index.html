@@ -708,7 +708,7 @@
         .badge-vbeps    { background: #7c3aed; }
         .badge-biathlon { background: #0b7bb5; }
         .badge-laser    { background: #d9600d; }
-        .badge-teneps   { background: #16803c; }
+        .badge-matchmanager { background: #16803c; }
 
         /* Encadrés install */
         .aide-install {
@@ -747,7 +747,7 @@
         <div class="en-tete" style="position:relative;">
             <button class="btn-aide" id="btnAide" title="Aide &amp; informations" aria-label="Aide">?</button>
             <h1>Scan EPS</h1>
-            <p>Version 1.5</p>
+            <p>Version 1.6</p>
             <span class="badge-universel">🌟 Scanner universel : regroupe les résultats de plusieurs élèves dans un même fichier</span>
         </div>
 
@@ -1287,7 +1287,7 @@
             const dataLines = lignes.slice(1).filter(l => !l.startsWith('...'));
             if (!dataLines.length) throw new Error(`${appName} : aucune donnée trouvée`);
 
-            // ── Schéma TEN EPS ──────────────────────────────────────────────
+            // ── Schéma Match Manager EPS (ex TEN EPS : le préfixe TENEPS| reste inchangé) ──────────────────────────────────────────────
             // Payload : TENEPS|nom|classe|date|Mmode
             //   Mode bracket (M3)  : "rang;joueur" (pas de poule)
             //   Modes poules (M1/M2) : "NomPoule:" puis "rang;joueur;pts;victoires;défaites[;bonusArbitrage]"
@@ -1321,7 +1321,7 @@
                 cols.push('Rang', 'Joueur');
                 if (rows.some(r => 'Points' in r))          cols.push('Points', 'Victoires', 'Défaites');
                 if (rows.some(r => 'Bonus arbitrage' in r)) cols.push('Bonus arbitrage');
-                return { cols, rows, source: 'TEN EPS' };
+                return { cols, rows, source: 'Match Manager EPS' };
             }
 
             // ── Schéma LaserFit ─────────────────────────────────────────────
@@ -1966,7 +1966,7 @@
                     <span class="aide-app-badge badge-vbeps">🏐 VB EPS — Volleyball</span>
                     <span class="aide-app-badge badge-biathlon">🏃 BiathlonVMA</span>
                     <span class="aide-app-badge badge-laser">🏋️ LaserFit</span>
-                    <span class="aide-app-badge badge-teneps">🎾 TEN EPS — Tennis</span>
+                    <span class="aide-app-badge badge-matchmanager">🏆 Match Manager EPS</span>
                 </div>
                 <p style="margin-top:10px;">
                     📥 Ces applications sont téléchargeables sur <code>outils-eps.fr</code>.
@@ -1982,9 +1982,9 @@
                 <ul>
                     <li><strong>Multi-lignes</strong> : un seul QR code peut contenir plusieurs enregistrements (ex. plusieurs joueurs VB EPS, ou toute la séance BiathlonVMA) — tous sont importés en une seule passe. Si un QR a été tronqué par l'application d'origine (<code>...+N obs</code>), un avertissement indique combien d'enregistrements manquent.</li>
                     <li><strong>Colonnes illimitées</strong> : le scanner s'adapte automatiquement au nombre de colonnes (LaserFit peut en générer 15+).</li>
-                    <li><strong>3 formats reconnus automatiquement</strong> : CSV standard, JSON compact (BiathlonVMA), multi-lignes avec préfixe (VB EPS, TEN EPS, LaserFit).</li>
+                    <li><strong>3 formats reconnus automatiquement</strong> : CSV standard, JSON compact (BiathlonVMA), multi-lignes avec préfixe (VB EPS, Match Manager EPS, LaserFit).</li>
                     <li><strong>Fusion des formats</strong> : vous pouvez scanner des QR codes de différentes applications dans la même session — les colonnes sont fusionnées sans erreur.</li>
-                    <li><strong>Export CSV</strong> : compatible Excel français (séparateur <code>;</code>, encodage UTF-8). Le fichier est nommé automatiquement <code>APPLICATION_CLASSE_AAAA-MM-JJ_HHhMM.csv</code> (par exemple <code>TEN-EPS_3eB_2026-10-24_12h20.csv</code>) : l'application et la classe sont lues dans les QR scannés, avec <code>Multi-apps</code> ou <code>Multi-classes</code> si plusieurs sont mélangés. Sur la tablette, le sélecteur de fichiers d'Android s'ouvre pour choisir le dossier ; le bouton Retour l'annule.</li>
+                    <li><strong>Export CSV</strong> : compatible Excel français (séparateur <code>;</code>, encodage UTF-8). Le fichier est nommé automatiquement <code>APPLICATION_CLASSE_AAAA-MM-JJ_HHhMM.csv</code> (par exemple <code>LaserFit_3eB_2026-10-24_12h20.csv</code>) : l'application et la classe sont lues dans les QR scannés, avec <code>Multi-apps</code> ou <code>Multi-classes</code> si plusieurs sont mélangés. Sur la tablette, le sélecteur de fichiers d'Android s'ouvre pour choisir le dossier ; le bouton Retour l'annule.</li>
                     <li><strong>100 % hors ligne</strong> : fonctionne sans connexion internet une fois installée.</li>
                     <li><strong>Sauvegarde automatique</strong> : les données sont conservées même si vous fermez l'application.</li>
                 </ul>
@@ -2074,7 +2074,7 @@
                 </div>
 
                 Application conçue par <strong>Nathalie Prenois</strong>, enseignante EPS<br>
-                Collège Mont Saint Jean &nbsp;·&nbsp; Version 1.5
+                Collège Mont Saint Jean &nbsp;·&nbsp; Version 1.6
             </div>
         </div>
     </div>

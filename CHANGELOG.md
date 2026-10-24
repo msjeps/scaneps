@@ -1,5 +1,11 @@
 # Changelog - SCAN EPS
 
+## 2026-10-24 (aide : TEN EPS devient Match Manager EPS - version 1.6, versionCode 9, publiée dans la Release `v1.6`)
+
+- **Aide** : le badge « TEN EPS - Tennis » devient « Match Manager EPS » (l'application a été renommée) ; la liste des formats reconnus et l'exemple de nom de fichier d'export sont mis à jour (l'exemple utilise LaserFit, dont le schéma porte la colonne `Application`). Le libellé de source affiché après un scan devient `[Match Manager EPS]`.
+- **Décodage inchangé** : Match Manager EPS garde le préfixe `TENEPS|` dans ses QR, le parseur le lit toujours (testé avec un QR `TENEPS|...` : 2 lignes, 9 colonnes). Limite connue : ce schéma n'a pas de colonne `Application`, donc un export de Match Manager est nommé `SCAN-EPS_<classe>_<date>.csv`.
+- Cache `scan-eps-v16`, même certificat (SHA-256 5440670f…f889, vérifié). Guide PDF régénéré avec les mêmes changements. Non testé sur tablette (texte d'aide seulement).
+
 ## 2026-10-24 (écarts de charte - version 1.5, versionCode 8, publiée dans la Release `v1.5`)
 
 - **Plus de `alert` / `confirm` natifs** : boîte de message maison (`afficherModale`, `#modalMessage`, texte via `textContent`) pour la suppression d'une ligne, l'effacement de toutes les données, l'erreur de lecture QR, l'échec caméra et « aucune donnée à exporter ». Le scan est suspendu tant qu'elle est ouverte (comme avec `alert`) ; le bouton Retour la ferme en premier.
