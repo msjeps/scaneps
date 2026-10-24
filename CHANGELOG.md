@@ -1,5 +1,9 @@
 # Changelog - SCAN EPS
 
+## 2026-10-24 (écran toujours allumé - version affichée 1.3, versionCode 6)
+
+- **`FLAG_KEEP_SCREEN_ON`** ajouté dans `MainActivity` : l'écran ne se met plus en veille pendant une session de scan (APK). **Wake Lock PWA** : l'écran reste allumé tant que l'app est ouverte (avant : seulement caméra active), réacquis au retour au premier plan et au premier toucher. Cache `scan-eps-v11`. Non testé sur tablette, non publié.
+
 ## 2026-10-24 (pont natif, bouton Retour, nom d'export - version affichée 1.2, versionCode 5)
 
 - **Faux message de succès corrigé** : en mode APK, la page n'affiche plus « téléchargé avec succès » à l'appel de `saveCSV`. Kotlin signale le vrai résultat (enregistré, annulé, trop gros > 5 Mo, contenu perdu, erreur d'écriture) via `updateStatut`, message passé par `JSONObject.quote`. L'état en attente est vidé dans tous les cas.

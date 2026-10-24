@@ -748,7 +748,7 @@
         <div class="en-tete" style="position:relative;">
             <button class="btn-aide" id="btnAide" title="Aide &amp; informations" aria-label="Aide">?</button>
             <h1>Scan EPS</h1>
-            <p>Version 1.2</p>
+            <p>Version 1.3</p>
             <span class="badge-universel">🌟 Scanner universel : regroupe les résultats de plusieurs élèves dans un même fichier</span>
         </div>
 
@@ -912,12 +912,13 @@
         }
 
         /* ========================================
-           WAKE LOCK — empêche le smartphone de verrouiller l'écran
-           pendant une session de scan (réacquis si l'app repasse au premier plan)
+           WAKE LOCK — empêche l'écran de se mettre en veille tant que l'app est ouverte
+           (scan, relecture du tableau, export), réacquis si l'app repasse au premier plan.
+           Dans l'APK, FLAG_KEEP_SCREEN_ON joue le même rôle.
            ======================================== */
         async function demanderWakeLock() {
             try {
-                if ('wakeLock' in navigator) {
+                if ('wakeLock' in navigator && wakeLock === null) {
                     wakeLock = await navigator.wakeLock.request('screen');
                     wakeLock.addEventListener('release', () => { wakeLock = null; });
                 }
@@ -934,10 +935,12 @@
         }
 
         document.addEventListener('visibilitychange', () => {
-            if (scanActif && wakeLock === null && document.visibilityState === 'visible') {
+            if (wakeLock === null && document.visibilityState === 'visible') {
                 demanderWakeLock();
             }
         });
+        // Certains navigateurs refusent la demande avant un geste de l'utilisateur : on réessaie au premier toucher
+        document.addEventListener('click', () => { if (wakeLock === null) demanderWakeLock(); });
 
         /* ========================================
            DÉMARRAGE DE LA CAMÉRA
@@ -985,7 +988,6 @@
                 video.srcObject = null;
             }
 
-            relacherWakeLock();
 
             document.getElementById('btnDemarrer').disabled = false;
             document.getElementById('btnArreter').disabled = true;
@@ -1715,6 +1717,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Charger les données sauvegardées
             chargerDonnees();
+            demanderWakeLock();
             
             // Attacher les événements aux boutons de caméra
             document.getElementById('btnDemarrer').addEventListener('click', demarrerCamera);
@@ -1916,7 +1919,7 @@
                 </div>
 
                 Application conçue par <strong>Nathalie Prenois</strong>, enseignante EPS<br>
-                Collège Mont Saint Jean &nbsp;·&nbsp; Version 1.2
+                Collège Mont Saint Jean &nbsp;·&nbsp; Version 1.3
             </div>
         </div>
     </div>
