@@ -5,7 +5,7 @@
  * 100% offline — toutes les ressources sont embarquées dans index.html
  */
 
-const CACHE_NAME = 'scan-eps-v4';
+const CACHE_NAME = 'scan-eps-v5';
 const CACHE_ASSETS = [
   './',
   './index.html',
