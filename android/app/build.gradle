@@ -1,0 +1,73 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+// Charge keystore.properties (ignoré par git, jamais dans le code)
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+android {
+    namespace 'fr.scaneps.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "fr.scaneps.app"
+        minSdk 23
+        targetSdk 34
+        versionCode 11
+        versionName "1.8"
+    }
+
+    signingConfigs {
+        release {
+            if (keystoreProperties.containsKey("storeFile")) {
+                storeFile file(keystoreProperties["storeFile"])
+                storePassword keystoreProperties["storePassword"]
+                keyAlias keystoreProperties["keyAlias"]
+                keyPassword keystoreProperties["keyPassword"]
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig   signingConfigs.release
+            minifyEnabled   false
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
+    lint {
+        checkReleaseBuilds false
+        abortOnError       false
+    }
+}
+
+// Recopie la PWA (dossier parent) dans les assets avant chaque build : plus de copie manuelle
+tasks.register('syncWebApp', Copy) {
+    from("${rootDir}/..") {
+        include 'index.html', 'sw.js', 'manifest.json', 'icon_192.png', 'icon_192_maskable.png', 'icon_512.png', 'icon_512_maskable.png'
+    }
+    into "${projectDir}/src/main/assets"
+}
+preBuild.dependsOn 'syncWebApp'
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'androidx.webkit:webkit:1.11.0'
+}
