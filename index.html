@@ -40,7 +40,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #6e6ac6;
             min-height: 100vh;
             padding: 20px;
             color: var(--couleur-texte);
@@ -224,6 +224,11 @@
             color: var(--couleur-blanc);
         }
 
+        .bouton-secondaire {
+            background: var(--couleur-secondaire);
+            color: var(--couleur-texte);
+        }
+
         .bouton-danger {
             background: #FC466B;
             color: var(--couleur-blanc);
@@ -245,29 +250,30 @@
             font-size: 1.1em;
         }
 
+        /* Fonds unis : le dégradé n'est pas rendu par le GPU PowerVR GE8320 des vieilles tablettes */
         .statut-attente {
-            background: linear-gradient(135deg, #a8edea, #fed6e3);
+            background: #cfeee9;
             color: var(--couleur-texte);
         }
 
         .statut-scan-actif {
-            background: linear-gradient(135deg, #84fab0, #8fd3f4);
+            background: #8de8c9;
             color: #0d47a1;
             animation: pulse 2s infinite;
         }
 
         .statut-cooldown {
-            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
-            color: #d63031;
+            background: #fed98a;
+            color: #b02a2b;
         }
 
         .statut-success {
-            background: linear-gradient(135deg, #84fab0, #8fd3f4);
+            background: #8de8c9;
             color: #0d47a1;
         }
 
         .statut-warning {
-            background: linear-gradient(135deg, #fda4af, #fecdd3);
+            background: #fdb8c1;
             color: #9f1239;
         }
 
@@ -286,7 +292,7 @@
         }
 
         .compteur-item {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: #6e6ac6;
             color: var(--couleur-blanc);
             padding: 20px 30px;
             border-radius: 16px;
@@ -309,13 +315,13 @@
 
         /* Info colonnes détectées */
         .info-colonnes {
-            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+            background: #fed98a;
             padding: 15px 20px;
             border-radius: 12px;
             margin-bottom: 20px;
             text-align: center;
             font-weight: 600;
-            color: #d63031;
+            color: #b02a2b;
         }
 
         /* Tableau des données - RESPONSIVE */
@@ -334,7 +340,7 @@
         }
 
         thead {
-            background: linear-gradient(135deg, var(--couleur-primaire), var(--couleur-secondaire));
+            background: var(--couleur-primaire);
             color: var(--couleur-blanc);
             position: sticky;
             top: 0;
@@ -407,13 +413,13 @@
         }
 
         .message-info {
-            background: linear-gradient(135deg, #a8edea, #fed6e3);
+            background: #cfeee9;
             color: var(--couleur-texte);
         }
 
         .message-warning {
-            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
-            color: #d63031;
+            background: #fed98a;
+            color: #b02a2b;
         }
 
         @keyframes slideIn {
@@ -596,7 +602,7 @@
             width: 46px;
             height: 46px;
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--couleur-primaire), var(--couleur-secondaire));
+            background: var(--couleur-primaire);
             color: #fff;
             border: none;
             font-size: 1.4em;
@@ -615,12 +621,18 @@
         .modal-aide {
             display: none;
             position: fixed;
-            inset: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
             z-index: 2000;
             background: rgba(0,0,0,0.55);
             overflow-y: auto;
             animation: fadeIn 0.25s;
         }
+        /* Boîte de message maison : au-dessus de l'aide */
+        #modalMessage { z-index: 2100; }
+        #messageTexte { margin-bottom: 20px; white-space: pre-line; }
         .modal-aide-contenu {
             background: var(--couleur-fond);
             margin: 20px auto;
@@ -693,10 +705,10 @@
             font-weight: 600;
             color: #fff;
         }
-        .badge-vbeps    { background: linear-gradient(135deg, #7c3aed, #a78bfa); }
-        .badge-biathlon { background: linear-gradient(135deg, #0ea5e9, #38bdf8); }
-        .badge-laser    { background: linear-gradient(135deg, #f97316, #fb923c); }
-        .badge-teneps   { background: linear-gradient(135deg, #16a34a, #4ade80); }
+        .badge-vbeps    { background: #7c3aed; }
+        .badge-biathlon { background: #0b7bb5; }
+        .badge-laser    { background: #d9600d; }
+        .badge-teneps   { background: #16803c; }
 
         /* Encadrés install */
         .aide-install {
@@ -735,7 +747,7 @@
         <div class="en-tete" style="position:relative;">
             <button class="btn-aide" id="btnAide" title="Aide &amp; informations" aria-label="Aide">?</button>
             <h1>Scan EPS</h1>
-            <p>Version 1.4</p>
+            <p>Version 1.5</p>
             <span class="badge-universel">🌟 Scanner universel : regroupe les résultats de plusieurs élèves dans un même fichier</span>
         </div>
 
@@ -974,7 +986,7 @@
 
             } catch (error) {
                 console.error('Erreur caméra:', error);
-                alert('❌ Impossible d\'accéder à la caméra. Vérifiez les permissions.');
+                afficherModale('Caméra inaccessible', 'Impossible d\'accéder à la caméra. Vérifiez les permissions.');
             }
         }
 
@@ -1033,7 +1045,7 @@
             if (!scanActif) return;
 
             try {
-                if (video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth > 0 && !cooldownActif) {
+                if (video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth > 0 && !cooldownActif && !modaleOuverte()) {
                     let texte = null;
                     cycleScan++;
 
@@ -1460,7 +1472,7 @@
                 updateStatut('❌ ' + error.message, 'statut-warning');
                 if (navigator.vibrate) navigator.vibrate([80, 60, 80]);
                 setTimeout(() => {
-                    alert('Erreur de lecture du QR Code.\n\nDétails : ' + error.message);
+                    afficherModale('Erreur de lecture du QR code', 'Détails : ' + error.message);
                 }, 300);
             }
         }
@@ -1565,39 +1577,78 @@
         }
 
         /* ========================================
+           BOÎTE DE MESSAGE MAISON
+           Remplace alert() et confirm() : les boîtes natives font sortir du plein écran
+           et le scan est suspendu tant qu'elle est ouverte (comme avec alert()).
+           Le texte passe par textContent : un message peut contenir du texte d'un QR.
+           ======================================== */
+        let actionModale = null;
+
+        function modaleOuverte() {
+            return document.getElementById('modalMessage').style.display === 'block';
+        }
+
+        function afficherModale(titre, message, options) {
+            options = options || {};
+            document.getElementById('messageTitre').textContent = titre;
+            document.getElementById('messageTexte').textContent = message;
+            const ok = document.getElementById('btnMessageOk');
+            ok.textContent = options.libelleOk || 'OK';
+            ok.className = 'bouton ' + (options.danger ? 'bouton-danger' : 'bouton-primaire');
+            document.getElementById('btnMessageAnnuler').style.display = options.surOk ? '' : 'none';
+            actionModale = options.surOk || null;
+            document.getElementById('modalMessage').style.display = 'block';
+        }
+
+        function fermerModale() {
+            document.getElementById('modalMessage').style.display = 'none';
+            actionModale = null;
+        }
+
+        /* ========================================
            SUPPRIMER UNE LIGNE
            ======================================== */
         function supprimerLigne(index) {
-            if (confirm('Voulez-vous vraiment supprimer cette ligne ?')) {
-                donnees.splice(index, 1);
-                compteurScans--;
-                document.getElementById('compteurScans').textContent = compteurScans;
-                afficherDonnees();
-                sauvegarderDonnees();
-            }
+            afficherModale('Supprimer cette ligne ?', 'Cette ligne scannée sera retirée du tableau.', {
+                libelleOk: 'Supprimer',
+                danger: true,
+                surOk: function () {
+                    donnees.splice(index, 1);
+                    compteurScans--;
+                    document.getElementById('compteurScans').textContent = compteurScans;
+                    afficherDonnees();
+                    sauvegarderDonnees();
+                }
+            });
         }
 
         /* ========================================
            EFFACER TOUTES LES DONNÉES
            ======================================== */
         function effacerDonnees() {
-            if (confirm('⚠️ Attention ! Voulez-vous vraiment effacer toutes les données scannées ?\n\nCela réinitialisera également la détection des colonnes.')) {
-                donnees = [];
-                colonnes = [];
-                compteurScans = 0;
-                document.getElementById('compteurScans').textContent = '0';
-                document.getElementById('compteurColonnes').textContent = '0';
-                document.getElementById('infoColonnes').innerHTML = 
-                    '📊 En attente du premier scan pour détecter les colonnes...';
-                
-                // Réinitialiser les en-têtes
-                const thead = document.getElementById('tableauEntetes');
-                thead.innerHTML = '<tr><th>#</th><th>Actions</th></tr>';
-                
-                afficherDonnees();
-                localStorage.removeItem('scannerUniversel');
-                updateStatut('🗑️ Toutes les données ont été effacées', 'statut-warning');
-            }
+            afficherModale('Effacer toutes les données ?', 'Toutes les données scannées seront supprimées de la tablette.\n\nLa détection des colonnes sera aussi réinitialisée.', {
+                libelleOk: 'Tout effacer',
+                danger: true,
+                surOk: effacerDonneesConfirme
+            });
+        }
+
+        function effacerDonneesConfirme() {
+            donnees = [];
+            colonnes = [];
+            compteurScans = 0;
+            document.getElementById('compteurScans').textContent = '0';
+            document.getElementById('compteurColonnes').textContent = '0';
+            document.getElementById('infoColonnes').innerHTML =
+                '📊 En attente du premier scan pour détecter les colonnes...';
+
+            // Réinitialiser les en-têtes
+            const thead = document.getElementById('tableauEntetes');
+            thead.innerHTML = '<tr><th>#</th><th>Actions</th></tr>';
+
+            afficherDonnees();
+            localStorage.removeItem('scannerUniversel');
+            updateStatut('🗑️ Toutes les données ont été effacées', 'statut-warning');
         }
 
         /* ========================================
@@ -1656,7 +1707,7 @@
 
         function exporterCSV() {
             if (donnees.length === 0) {
-                alert('❌ Aucune donnée à exporter');
+                afficherModale('Export impossible', 'Aucune donnée à exporter.');
                 return;
             }
 
@@ -1696,7 +1747,7 @@
            ======================================== */
         function ouvrirModalSheets() {
             if (donnees.length === 0) {
-                alert('❌ Aucune donnée à exporter');
+                afficherModale('Export impossible', 'Aucune donnée à exporter.');
                 return;
             }
             if (window.Android) {
@@ -1842,7 +1893,14 @@
         document.getElementById('btnQuitterApp').addEventListener('click', function () {
             if (window.Android && window.Android.quitApp) window.Android.quitApp();
         });
+        document.getElementById('btnMessageAnnuler').addEventListener('click', fermerModale);
+        document.getElementById('btnMessageOk').addEventListener('click', function () {
+            const action = actionModale;
+            fermerModale();
+            if (action) action();
+        });
         window.__androidBack = function () {
+            if (modaleOuverte()) { fermerModale(); return true; }
             const quitter = document.getElementById('modalQuitter');
             if (quitter.style.display === 'block') { fermerQuitter(); return true; }
             const aide = document.getElementById('modalAide');
@@ -1867,6 +1925,18 @@
             <div style="display:flex;flex-wrap:wrap;margin:-5px;">
                 <button class="bouton bouton-primaire" id="btnResterApp" style="flex:1 1 140px;min-height:48px;margin:5px;">Rester</button>
                 <button class="bouton bouton-danger" id="btnQuitterApp" style="flex:1 1 140px;min-height:48px;margin:5px;">Quitter</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Boîte de message maison : remplace alert() et confirm() natifs -->
+    <div id="modalMessage" class="modal-aide" role="dialog" aria-modal="true" aria-labelledby="messageTitre">
+        <div class="modal-aide-contenu" style="max-width:420px;">
+            <h2 id="messageTitre" style="margin-bottom:12px;"></h2>
+            <p id="messageTexte"></p>
+            <div style="display:flex;flex-wrap:wrap;margin:-5px;">
+                <button class="bouton bouton-secondaire" id="btnMessageAnnuler" style="flex:1 1 140px;min-height:48px;margin:5px;">Annuler</button>
+                <button class="bouton bouton-primaire" id="btnMessageOk" style="flex:1 1 140px;min-height:48px;margin:5px;">OK</button>
             </div>
         </div>
     </div>
@@ -1914,7 +1984,7 @@
                     <li><strong>Colonnes illimitées</strong> : le scanner s'adapte automatiquement au nombre de colonnes (LaserFit peut en générer 15+).</li>
                     <li><strong>3 formats reconnus automatiquement</strong> : CSV standard, JSON compact (BiathlonVMA), multi-lignes avec préfixe (VB EPS, TEN EPS, LaserFit).</li>
                     <li><strong>Fusion des formats</strong> : vous pouvez scanner des QR codes de différentes applications dans la même session — les colonnes sont fusionnées sans erreur.</li>
-                    <li><strong>Export CSV</strong> : compatible Excel français (séparateur <code>;</code>, encodage UTF-8).</li>
+                    <li><strong>Export CSV</strong> : compatible Excel français (séparateur <code>;</code>, encodage UTF-8). Le fichier est nommé automatiquement <code>APPLICATION_CLASSE_AAAA-MM-JJ_HHhMM.csv</code> (par exemple <code>TEN-EPS_3eB_2026-10-24_12h20.csv</code>) : l'application et la classe sont lues dans les QR scannés, avec <code>Multi-apps</code> ou <code>Multi-classes</code> si plusieurs sont mélangés. Sur la tablette, le sélecteur de fichiers d'Android s'ouvre pour choisir le dossier ; le bouton Retour l'annule.</li>
                     <li><strong>100 % hors ligne</strong> : fonctionne sans connexion internet une fois installée.</li>
                     <li><strong>Sauvegarde automatique</strong> : les données sont conservées même si vous fermez l'application.</li>
                 </ul>
@@ -1969,6 +2039,11 @@
                     <li>Scannez les QR codes suivants (délai de 2 s entre chaque).</li>
                     <li>Appuyez sur <strong>📄 Exporter en CSV</strong> pour récupérer les données dans Excel ou Google Sheets.</li>
                 </ol>
+                <p style="margin-top:10px;">
+                    <strong>Bouton Retour de la tablette</strong> : il ferme d'abord cette aide ou une fenêtre ouverte.
+                    Si des données sont scannées, il demande confirmation avant de quitter ; elles restent sauvegardées
+                    sur la tablette et réapparaissent à la réouverture. Sans donnée scannée, il quitte directement.
+                </p>
             </div>
 
             <!-- Pied -->
@@ -1999,7 +2074,7 @@
                 </div>
 
                 Application conçue par <strong>Nathalie Prenois</strong>, enseignante EPS<br>
-                Collège Mont Saint Jean &nbsp;·&nbsp; Version 1.4
+                Collège Mont Saint Jean &nbsp;·&nbsp; Version 1.5
             </div>
         </div>
     </div>

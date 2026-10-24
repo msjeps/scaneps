@@ -1,5 +1,13 @@
 # Changelog - SCAN EPS
 
+## 2026-10-24 (écarts de charte - version 1.5, versionCode 8, construite, NON publiée)
+
+- **Plus de `alert` / `confirm` natifs** : boîte de message maison (`afficherModale`, `#modalMessage`, texte via `textContent`) pour la suppression d'une ligne, l'effacement de toutes les données, l'erreur de lecture QR, l'échec caméra et « aucune donnée à exporter ». Le scan est suspendu tant qu'elle est ouverte (comme avec `alert`) ; le bouton Retour la ferme en premier.
+- **Mode immersif dans l'APK** : `MainActivity` masque les barres système (`WindowInsetsControllerCompat`, balayage du bord pour les revoir) au démarrage et à chaque reprise du focus (retour du sélecteur de fichiers).
+- **Dégradés remplacés par des fonds unis** : fond de page, statuts, compteurs, bandeaux, bouton d'aide, en-tête du tableau, badges de l'aide. `inset: 0` des modales remplacé par `top/right/bottom/left`.
+- **Aide** : nom du fichier d'export (`APPLICATION_CLASSE_AAAA-MM-JJ_HHhMM.csv`) et comportement du bouton Retour. **Guide PDF** `scan-eps.pdf` créé (2 pages, `generer-guide.py`, reportlab) avec le texte de l'aide, le lien de l'APK et le nom de fichier exacts ; non publié.
+- Cache `scan-eps-v15`. Même certificat (SHA-256 5440670f…f889, vérifié). Testé dans un navigateur (modales, annulation, confirmation, Retour, injection HTML dans un message) ; **non testé sur tablette** (immersif, rendu des fonds unis, modales au doigt).
+
 ## 2026-10-24 (scan caméra réparé sur la tablette lente - version 1.4, versionCode 7, publiée dans la Release `v1.4`)
 
 - **Cause trouvée par mesure sur la Lenovo TB-X606F** (débogage USB, captures et logcat) : jsQR mettait **1084 ms par image** (WebView 155, CPU Helio P22T), plus une analyse inversée (`attemptBoth`) et un nouveau canvas 1280×720 créé 60 fois par seconde. Le premier QR LaserFit demandait environ 1 minute, puis l'app saturait.
