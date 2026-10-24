@@ -1,5 +1,11 @@
 # Changelog - SCAN EPS
 
+## 2026-10-24 (durcissement sécurité - version 1.8, versionCode 11, publiée dans la Release `v1.8`)
+
+- **En-tête du CSV** : `construireCSV()` n'appliquait la neutralisation des formules et les guillemets qu'aux cellules, pas à la ligne d'en-tête (`'#;' + colonnes.join(';')`). Un nom de colonne venant d'un QR et commençant par `=`, `+`, `-`, `@` donnait une formule dans le fichier ; un nom contenant `;` décalait les colonnes. Nouvelle fonction `champCSV()` appliquée aux en-têtes ET aux cellules (guillemets aussi pour `\r`). Testé dans le navigateur avec `=HYPERLINK(...)` en en-tête : sortie `'=HYPERLINK(...)`.
+- **Content-Security-Policy** (balise `<meta>` dans `index.html`) : `default-src 'none'`, `connect-src 'none'`, `form-action 'none'`, `base-uri 'none'`, images `self data: blob:`, `worker-src 'self'`. `script-src` et `style-src` gardent `'unsafe-inline'` (fichier unique avec scripts et styles intégrés) : la CSP n'empêche donc pas un script injecté de s'exécuter, mais l'empêche d'envoyer des données (un `fetch` vers l'extérieur est bloqué, vérifié). Aucune violation au chargement. **Non vérifié** : l'enregistrement du service worker (le navigateur de test refuse aussi sans CSP) et la caméra : à tester sur la tablette.
+- Version 1.8 : version affichée (2 endroits), `versionName` 1.8 / `versionCode` 11, cache `scan-eps-v18`, assets recopiés (`cmp` identiques, y compris dans l'APK), même certificat (SHA-256 5440670f…f889). APK 1.7 sauvegardé dans `scaneps-backup/SCANEPS-signed-v10-1.7.apk`. Guide PDF régénéré en 1.8.
+
 ## 2026-10-24 (nom de fichier d'export Match Manager EPS et VB EPS - version 1.7, versionCode 10, publiée dans la Release `v1.7`)
 
 - **Match Manager EPS et VB EPS** : le décodage des QR `TENEPS|` et `VBEPS|` ajoute désormais une colonne `Application` (en première position, valeurs `Match Manager EPS` et `VB EPS`), comme LaserFit et BiathlonVMA. Le CSV exporté est donc nommé `Match-Manager-EPS_<classe>_<date>_<heure>.csv` (ou `VB-EPS_...`) au lieu de `SCAN-EPS_...`. Testé en Node sur un QR de chaque app. Effet de bord voulu : le CSV gagne cette colonne. La limite notée dans l'entrée v1.6 est levée dès la prochaine publication.

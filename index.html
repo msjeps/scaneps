@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- CSP : l'app est 100 % hors ligne, aucune requête réseau ni formulaire n'est autorisé.
+         'unsafe-inline' reste nécessaire (scripts et styles dans ce fichier unique). -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'none'; manifest-src 'self'; worker-src 'self'; form-action 'none'; base-uri 'none'">
     <meta name="description" content="Scan EPS — Récupérer rapidement les résultats des élèves grâce aux QR codes, dans un seul fichier.">
     <meta name="author" content="Collège Mont Saint Jean">
     <title>Scanner QR Universel - EPS</title>
@@ -747,7 +750,7 @@
         <div class="en-tete" style="position:relative;">
             <button class="btn-aide" id="btnAide" title="Aide &amp; informations" aria-label="Aide">?</button>
             <h1>Scan EPS</h1>
-            <p>Version 1.7</p>
+            <p>Version 1.8</p>
             <span class="badge-universel">🌟 Scanner universel : regroupe les résultats de plusieurs élèves dans un même fichier</span>
         </div>
 
@@ -1654,24 +1657,27 @@
         /* ========================================
            EXPORTER EN CSV (100% offline — pas de dépendance)
            ======================================== */
+        // Prépare un champ CSV (en-tête ou cellule), tous deux issus d'un QR non fiable
+        function champCSV(brut) {
+            let val = (brut || '').toString();
+            // Neutraliser l'injection de formule (Excel/Sheets/LibreOffice) :
+            // un champ commençant par = + - @ ou tabulation est évalué comme formule.
+            // Les nombres purs (ex. -2) restent inchangés.
+            if (/^[=+\-@\t\r]/.test(val) && !/^-?\d+([.,]\d+)?$/.test(val)) {
+                val = "'" + val;
+            }
+            // Échapper guillemets, séparateurs et retours à la ligne
+            if (val.includes(';') || val.includes('"') || val.includes('\n') || val.includes('\r')) {
+                return '"' + val.replace(/"/g, '""') + '"';
+            }
+            return val;
+        }
+
         function construireCSV() {
             // En-tête CSV avec séparateur ; (compatible Excel français)
-            let csv = '#;' + colonnes.join(';') + '\n';
+            let csv = '#;' + colonnes.map(champCSV).join(';') + '\n';
             donnees.forEach((ligne, index) => {
-                const valeurs = colonnes.map(col => {
-                    let val = (ligne[col] || '').toString();
-                    // Neutraliser l'injection de formule (Excel/Sheets/LibreOffice) :
-                    // un champ commençant par = + - @ ou tabulation est évalué comme formule.
-                    // Les nombres purs (ex. -2) restent inchangés.
-                    if (/^[=+\-@\t\r]/.test(val) && !/^-?\d+([.,]\d+)?$/.test(val)) {
-                        val = "'" + val;
-                    }
-                    // Échapper guillemets et séparateurs
-                    if (val.includes(';') || val.includes('"') || val.includes('\n')) {
-                        return '"' + val.replace(/"/g, '""') + '"';
-                    }
-                    return val;
-                });
+                const valeurs = colonnes.map(col => champCSV(ligne[col]));
                 csv += (index + 1) + ';' + valeurs.join(';') + '\n';
             });
             return csv;
@@ -2074,7 +2080,7 @@
                 </div>
 
                 Application conçue par <strong>Nathalie Prenois</strong>, enseignante EPS<br>
-                Collège Mont Saint Jean &nbsp;·&nbsp; Version 1.7
+                Collège Mont Saint Jean &nbsp;·&nbsp; Version 1.8
             </div>
         </div>
     </div>
