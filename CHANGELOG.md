@@ -1,12 +1,12 @@
 # Changelog - SCAN EPS
 
-## 2026-10-24 (écarts de charte - version 1.5, versionCode 8, construite, NON publiée)
+## 2026-10-24 (écarts de charte - version 1.5, versionCode 8, publiée dans la Release `v1.5`)
 
 - **Plus de `alert` / `confirm` natifs** : boîte de message maison (`afficherModale`, `#modalMessage`, texte via `textContent`) pour la suppression d'une ligne, l'effacement de toutes les données, l'erreur de lecture QR, l'échec caméra et « aucune donnée à exporter ». Le scan est suspendu tant qu'elle est ouverte (comme avec `alert`) ; le bouton Retour la ferme en premier.
 - **Mode immersif dans l'APK** : `MainActivity` masque les barres système (`WindowInsetsControllerCompat`, balayage du bord pour les revoir) au démarrage et à chaque reprise du focus (retour du sélecteur de fichiers).
 - **Dégradés remplacés par des fonds unis** : fond de page, statuts, compteurs, bandeaux, bouton d'aide, en-tête du tableau, badges de l'aide. `inset: 0` des modales remplacé par `top/right/bottom/left`.
 - **Aide** : nom du fichier d'export (`APPLICATION_CLASSE_AAAA-MM-JJ_HHhMM.csv`) et comportement du bouton Retour. **Guide PDF** `scan-eps.pdf` créé (2 pages, `generer-guide.py`, reportlab) avec le texte de l'aide, le lien de l'APK et le nom de fichier exacts ; non publié.
-- Cache `scan-eps-v15`. Même certificat (SHA-256 5440670f…f889, vérifié). Testé dans un navigateur (modales, annulation, confirmation, Retour, injection HTML dans un message) ; **non testé sur tablette** (immersif, rendu des fonds unis, modales au doigt).
+- Cache `scan-eps-v15`. Même certificat (SHA-256 5440670f…f889, vérifié). Testé dans un navigateur (modales, annulation, confirmation, Retour, injection HTML dans un message), puis **testé sur la Lenovo TB-X606F par Nathalie : tout est ok** (mode immersif, modales au doigt, fonds unis). Publié le 2026-10-24 : commit `5fb7d3e`, site en ligne en `scan-eps-v15`, Release `v1.5`. Le guide PDF reste à mettre en ligne sur outils-eps.fr (site en maintenance).
 
 ## 2026-10-24 (scan caméra réparé sur la tablette lente - version 1.4, versionCode 7, publiée dans la Release `v1.4`)
 
