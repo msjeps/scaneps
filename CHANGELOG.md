@@ -1,5 +1,29 @@
 # Changelog - SCAN EPS
 
+## 2026-10-24 (audit de sécurité - correctif interne, version affichée inchangée)
+
+- **Faille XSS stockée corrigée** : les données décodées d'un QR (en-têtes de colonnes, cellules,
+  bandeau "colonnes détectées") étaient réinjectées dans `innerHTML` sans aucun échappement, y
+  compris après rechargement depuis `localStorage`. Un QR contenant une balise HTML (`<img onerror=...>`,
+  `<svg onload=...>`) s'exécutait comme du code à l'écran suivant. Nouveau helper `escapeHtml()`,
+  appliqué aux 4 points de rendu concernés (`genererEntetes`, les deux bandeaux `infoColonnes`,
+  `afficherDonnees`). Correctif recopié dans les assets de l'APK (`ScanEPS/app/src/main/assets/`).
+  Cache du service worker passé à `scan-eps-v3`. Détails dans `security-audit-reports/SCAN-EPS/`
+  et la leçon générale dans `../LECONS-TECHNIQUES.md`. **Non publié** (en attente d'accord).
+- **Injection de formule CSV corrigée** (`construireCSV` : préfixe `'` sur `= + - @`, nombres purs épargnés).
+- **APK** : `allowBackup="false"`, nom de fichier assaini et taille limitée dans le pont `saveCSV`, `versionCode` 3 (version affichée 1.1 inchangée), `SCANEPS-signed.apk` reconstruit avec la même clé. Cache SW `scan-eps-v4`. Non testé sur tablette, non publié sur GitHub Pages.
+
+## Version 1.1 - 2026-10-08 (audit de compatibilité)
+
+- **LaserFit** : schéma dédié (`LASERFIT|classe|date|observateur`). Avant, le QR tombait dans le
+  fallback générique (`LASERFIT Col 1…`). Colonnes désormais nommées : Pratiquant, Exercice/Reps/Pts N, Score total.
+- **BiathlonVMA mode distance** (`m:"d"` dans BJ2/BJ3) : le détail des courses était libellé en
+  mètres alors que ces valeurs sont des km/h. Libellé corrigé.
+- **QR tronqué (VB EPS, LaserFit)** : la ligne `...+N obs` était ignorée en silence, le scan
+  affichait « ajouté » alors que des observations manquaient. Un avertissement s'affiche maintenant.
+- Cache du service worker passé à `scan-eps-v2` pour que les tablettes récupèrent la mise à jour.
+- Version affichée et APK passées en 1.1 (`versionCode` 2) ; `SCANEPS-signed.apk` reconstruit avec la même clé (`scaneps.jks`) : installable par-dessus la 1.0.
+
 ## Version 1.0 - 2026-07-26
 
 ### Correctifs

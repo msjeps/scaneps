@@ -754,7 +754,7 @@
         <div class="en-tete" style="position:relative;">
             <button class="btn-aide" id="btnAide" title="Aide &amp; informations" aria-label="Aide">?</button>
             <h1>Scan EPS</h1>
-            <p>Version 1.0</p>
+            <p>Version 1.1</p>
             <span class="badge-universel">🌟 Scanner universel : regroupe les résultats de plusieurs élèves dans un même fichier</span>
         </div>
 
@@ -907,6 +907,15 @@
         let dernierQRCode = '';
         let compteurScans = 0;
         let wakeLock = null;
+
+        /* ========================================
+           ÉCHAPPEMENT HTML — tout texte issu d'un QR scanné (en-têtes,
+           cellules, noms de colonnes) doit passer par ici avant innerHTML
+           (faille XSS stockée corrigée 2026-10)
+           ======================================== */
+        function escapeHtml(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        }
 
         /* ========================================
            WAKE LOCK — empêche le smartphone de verrouiller l'écran
@@ -1101,7 +1110,9 @@
                         sc:'Score course', st:'Score tirs'
                     },
                     tableaux: {
-                        cs: arr => (arr||[]).map((c,i) => `C${i+1}: ${c[3]}m/${c[2]}m (${c[5]}pts)`).join(' | '),
+                        cs: (arr, mode) => (arr||[]).map((c,i) => mode === 'd'
+                            ? `C${i+1}: ${c[3]}km/h/${c[2]}km/h (${c[5]}pts)`
+                            : `C${i+1}: ${c[3]}m/${c[2]}m (${c[5]}pts)`).join(' | '),
                         ts: arr => (arr||[]).join(', ')
                     },
                     labelTableaux: { cs:'Détail courses', ts:'Détail tirs' }
@@ -1114,7 +1125,9 @@
                         sc:'Score course', st:'Score lancers', mc:'Mode calcul lancers', sf:'Score total'
                     },
                     tableaux: {
-                        cs: arr => (arr||[]).map((c,i) => `C${i+1}: ${c[3]}m/${c[2]}m (${c[5]}pts)`).join(' | '),
+                        cs: (arr, mode) => (arr||[]).map((c,i) => mode === 'd'
+                            ? `C${i+1}: ${c[3]}km/h/${c[2]}km/h (${c[5]}pts)`
+                            : `C${i+1}: ${c[3]}m/${c[2]}m (${c[5]}pts)`).join(' | '),
                         ts: arr => (arr||[]).join(', ')
                     },
                     labelTableaux: { cs:'Détail courses', ts:'Détail lancers' }
@@ -1126,7 +1139,7 @@
 
             // Construit {cols, row} pour UN enregistrement élève à partir d'un schéma connu -
             // partagé entre le cas "1 élève par QR" (BJ1/BJ2) et "N élèves dans un seul QR" (BJ3).
-            function construireLigneDepuisSchema(schema, enregistrement) {
+            function construireLigneDepuisSchema(schema, enregistrement, mode) {
                 const cols = ['Application', ...Object.values(schema.scalaires)];
                 Object.keys(schema.tableaux).forEach(k => {
                     if (enregistrement[k] && enregistrement[k].length) cols.push(schema.labelTableaux[k]);
@@ -1136,7 +1149,7 @@
                     row[lbl] = enregistrement[k] !== undefined ? String(enregistrement[k]) : '';
                 });
                 Object.entries(schema.tableaux).forEach(([k, fn]) => {
-                    if (enregistrement[k] && enregistrement[k].length) row[schema.labelTableaux[k]] = fn(enregistrement[k]);
+                    if (enregistrement[k] && enregistrement[k].length) row[schema.labelTableaux[k]] = fn(enregistrement[k], mode);
                 });
                 return { cols, row };
             }
@@ -1148,13 +1161,13 @@
                 if (Array.isArray(data.r)) {
                     let cols = [];
                     const rows = data.r.map(enregistrement => {
-                        const { cols: c, row } = construireLigneDepuisSchema(schema, enregistrement);
+                        const { cols: c, row } = construireLigneDepuisSchema(schema, enregistrement, data.m);
                         if (c.length > cols.length) cols = c;
                         return row;
                     });
                     return { cols, rows, source: schema.label };
                 }
-                const { cols, row } = construireLigneDepuisSchema(schema, data);
+                const { cols, row } = construireLigneDepuisSchema(schema, data, data.m);
                 return { cols, rows: [row], source: schema.label };
             }
 
@@ -1221,6 +1234,34 @@
                 if (rows.some(r => 'Points' in r))          cols.push('Points', 'Victoires', 'Défaites');
                 if (rows.some(r => 'Bonus arbitrage' in r)) cols.push('Bonus arbitrage');
                 return { cols, rows, source: 'TEN EPS' };
+            }
+
+            // ── Schéma LaserFit ─────────────────────────────────────────────
+            // Payload : LASERFIT|classe|date|observateur
+            //   Lignes : pratiquant;exo1;reps1;pts1;exo2;reps2;pts2;...;total
+            if (appName === 'LASERFIT') {
+                const classe = meta[0] || ''; const date = meta[1] || ''; const obs = meta[2] || '';
+                let nbExos = 0;
+                const rows = dataLines.map(l => {
+                    const p = l.split(';').map(v => v.trim());
+                    const total = p.length > 1 ? p[p.length - 1] : '';
+                    const milieu = p.slice(1, p.length > 1 ? -1 : undefined);
+                    const row = { Application: 'LaserFit', Classe: classe, Date: date,
+                        Observateur: obs, Pratiquant: p[0] || '' };
+                    for (let i = 0; i + 2 < milieu.length; i += 3) {
+                        const n = i / 3 + 1;
+                        row['Exercice ' + n] = milieu[i] || '';
+                        row['Reps ' + n]     = milieu[i + 1] || '';
+                        row['Pts ' + n]      = milieu[i + 2] || '';
+                        nbExos = Math.max(nbExos, n);
+                    }
+                    row['Score total'] = total;
+                    return row;
+                });
+                const cols = ['Application', 'Classe', 'Date', 'Observateur', 'Pratiquant'];
+                for (let n = 1; n <= nbExos; n++) cols.push('Exercice ' + n, 'Reps ' + n, 'Pts ' + n);
+                cols.push('Score total');
+                return { cols, rows, source: 'LaserFit' };
             }
 
             // ── Schéma VB EPS ──────────────────────────────────────────────
@@ -1308,7 +1349,7 @@
                 }
 
                 document.getElementById('infoColonnes').innerHTML =
-                    '✅ <strong>' + colonnes.length + ' colonnes</strong> [' + source + '] : ' + colonnes.join(', ');
+                    '✅ <strong>' + colonnes.length + ' colonnes</strong> [' + escapeHtml(source) + '] : ' + colonnes.map(escapeHtml).join(', ');
                 document.getElementById('infoColonnes').classList.remove('cache');
 
                 rows.forEach(row => { donnees.push(row); compteurScans++; });
@@ -1317,10 +1358,21 @@
                 document.getElementById('compteurColonnes').textContent = colonnes.length;
 
                 const nb = rows.length;
-                updateStatut(
-                    '✅ ' + nb + ' enregistrement' + (nb > 1 ? 's' : '') + ' ajouté' + (nb > 1 ? 's' : '') + ' [' + source + ']',
-                    'statut-success'
-                );
+                // VB EPS / LaserFit tronquent le QR trop gros en ajoutant "...+N obs" : sans ce
+                // contrôle, les observations manquantes seraient perdues sans aucun signal.
+                const mTronque = format === 'multilignes' && texte.match(/^\.\.\.\+(\d+)\s*obs/m);
+                if (mTronque) {
+                    updateStatut(
+                        '⚠️ ' + nb + ' enregistrement' + (nb > 1 ? 's' : '') + ' [' + source + '] - QR tronqué : ' +
+                        mTronque[1] + ' observation(s) manquante(s), utilise le CSV de l\'app',
+                        'statut-warning'
+                    );
+                } else {
+                    updateStatut(
+                        '✅ ' + nb + ' enregistrement' + (nb > 1 ? 's' : '') + ' ajouté' + (nb > 1 ? 's' : '') + ' [' + source + ']',
+                        'statut-success'
+                    );
+                }
 
                 afficherDonnees();
                 playSuccessSound();
@@ -1345,7 +1397,7 @@
             thead.innerHTML = '<tr><th>#</th>';
             
             colonnes.forEach(colonne => {
-                thead.innerHTML += `<th>${colonne}</th>`;
+                thead.innerHTML += `<th>${escapeHtml(colonne)}</th>`;
             });
             
             thead.innerHTML += '<th>Actions</th></tr>';
@@ -1410,7 +1462,7 @@
                     const estNombre = !isNaN(valeur) && valeur !== '' && valeur.match(/^-?\d+\.?\d*$/);
                     const classe = estNombre ? 'cell-number' : 'cell-text';
                     
-                    html += `<td class="${classe}">${valeur}</td>`;
+                    html += `<td class="${classe}">${escapeHtml(valeur)}</td>`;
                 });
                 
                 // Actions
@@ -1480,7 +1532,13 @@
             let csv = '#;' + colonnes.join(';') + '\n';
             donnees.forEach((ligne, index) => {
                 const valeurs = colonnes.map(col => {
-                    const val = (ligne[col] || '').toString();
+                    let val = (ligne[col] || '').toString();
+                    // Neutraliser l'injection de formule (Excel/Sheets/LibreOffice) :
+                    // un champ commençant par = + - @ ou tabulation est évalué comme formule.
+                    // Les nombres purs (ex. -2) restent inchangés.
+                    if (/^[=+\-@\t\r]/.test(val) && !/^-?\d+([.,]\d+)?$/.test(val)) {
+                        val = "'" + val;
+                    }
                     // Échapper guillemets et séparateurs
                     if (val.includes(';') || val.includes('"') || val.includes('\n')) {
                         return '"' + val.replace(/"/g, '""') + '"';
@@ -1584,8 +1642,8 @@
                 
                 if (colonnes.length > 0) {
                     genererEntetes();
-                    document.getElementById('infoColonnes').innerHTML = 
-                        `✅ <strong>${colonnes.length} colonnes chargées</strong> : ${colonnes.join(', ')}`;
+                    document.getElementById('infoColonnes').innerHTML =
+                        `✅ <strong>${colonnes.length} colonnes chargées</strong> : ${colonnes.map(escapeHtml).join(', ')}`;
                     document.getElementById('infoColonnes').classList.remove('cache');
                 }
                 
@@ -1706,6 +1764,9 @@
                     📥 Ces applications sont téléchargeables sur <code>outils-eps.fr</code>.
                 </p>
                 <p style="margin-top:10px;">
+                    📥 Ces applications sont téléchargeables sur <code>outils-eps.fr</code>.
+                </p>
+                <p style="margin-top:10px;">
                     Toute autre application générant un QR code au format CSV ou JSON est également prise en charge automatiquement.
                 </p>
             </div>
@@ -1802,7 +1863,7 @@
                 </div>
 
                 Application conçue par <strong>Nathalie Prenois</strong>, enseignante EPS<br>
-                Collège Mont Saint Jean &nbsp;·&nbsp; Version 1.0
+                Collège Mont Saint Jean &nbsp;·&nbsp; Version 1.1
             </div>
         </div>
     </div>
