@@ -1,5 +1,9 @@
 # Changelog - SCAN EPS
 
+## 2026-10-24 (clone du dépôt public)
+
+- **Clone de `msjeps/scaneps`** créé dans `~/Documents/APPLI EPS/APPLI EPS/scaneps/` (même convention que LaserFit, Match Manager EPS et Biathlon VMA), avec l'APK de la Release `v1.3` (`SCANEPS-signed.apk`, identique octet pour octet). **Règle : ce clone est mis à jour à chaque publication PWA ou APK.** Aucun changement de code. Le dossier `scaneps-backup/` (anciens APK + clé `scaneps.jks`) a été déplacé dans ce clone (`scaneps/scaneps-backup/`, exclu de git) ; `storeFile` de `ScanEPS/keystore.properties` mis à jour, fichier `.jks` retrouvé au nouvel emplacement.
+
 ## 2026-10-24 (écran toujours allumé - version affichée 1.3, versionCode 6)
 
 - **`FLAG_KEEP_SCREEN_ON`** ajouté dans `MainActivity` : l'écran ne se met plus en veille pendant une session de scan (APK). **Wake Lock PWA** : l'écran reste allumé tant que l'app est ouverte (avant : seulement caméra active), réacquis au retour au premier plan et au premier toucher. Cache `scan-eps-v11`. Publié dans la Release `v1.3` le 2026-10-24 ; non testé sur tablette.
@@ -18,7 +22,7 @@
 - **Aide** : adresse web `apps.outils-eps.fr/scaneps/` (l'ancienne `msjeps.github.io` redirige), nom de l'APK `SCANEPS-signed.apk` avec lien de téléchargement (Release GitHub « latest »), limite « 5 enregistrements » retirée (le code n'en impose aucune), avertissement de QR tronqué (`...+N obs`) documenté, LaserFit classé dans les formats multi-lignes à préfixe.
 - **Publication** : `index.html` + `sw.js` poussés sur `msjeps/scaneps` (cache `scan-eps-v7`). APK `versionCode` 4 (même certificat que le v3, installable par-dessus) publié dans la Release `v1.1` : https://github.com/msjeps/scaneps/releases/tag/v1.1. Le lien de l'aide n'est pas encore dans l'APK publié (prévu pour v1.2).
 - **Dépôt git local** créé dans `SCAN EPS/`, relié à `origin` (`msjeps/scaneps`). L'APK n'est pas versionné (il est dans la Release).
-- **À faire** : voir l'entrée ci-dessus (corrigé dans le code, pas encore publié).
+- **À faire** : voir l'entrée ci-dessus (corrigé et publié depuis, Releases v1.1 à v1.3).
 
 ## 2026-10-24 (audit de sécurité - correctif interne, version affichée inchangée)
 
