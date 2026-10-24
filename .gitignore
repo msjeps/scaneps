@@ -23,3 +23,6 @@ CLAUDE.md
 # APK et caches Gradle (le projet android/ est versionné, voir android/.gitignore)
 *.apk
 .gradle/
+
+# Notes de travail locales (non publiées)
+todo.md
