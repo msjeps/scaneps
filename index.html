@@ -747,7 +747,7 @@
         <div class="en-tete" style="position:relative;">
             <button class="btn-aide" id="btnAide" title="Aide &amp; informations" aria-label="Aide">?</button>
             <h1>Scan EPS</h1>
-            <p>Version 1.6</p>
+            <p>Version 1.7</p>
             <span class="badge-universel">🌟 Scanner universel : regroupe les résultats de plusieurs élèves dans un même fichier</span>
         </div>
 
@@ -1304,7 +1304,7 @@
                         return;
                     }
                     const p = l.split(';').map(v => v.trim());
-                    const row = { Tournoi: nomTournoi, Classe: classe, Date: date };
+                    const row = { Application: 'Match Manager EPS', Tournoi: nomTournoi, Classe: classe, Date: date };
                     if (poolCourante) row['Poule'] = poolCourante;
                     row['Rang']   = p[0] || '';
                     row['Joueur'] = p[1] || '';
@@ -1316,7 +1316,7 @@
                     }
                     rows.push(row);
                 });
-                const cols = ['Tournoi', 'Classe', 'Date'];
+                const cols = ['Application', 'Tournoi', 'Classe', 'Date'];
                 if (rows.some(r => 'Poule' in r))           cols.push('Poule');
                 cols.push('Rang', 'Joueur');
                 if (rows.some(r => 'Points' in r))          cols.push('Points', 'Victoires', 'Défaites');
@@ -1363,14 +1363,14 @@
                 dataLines.forEach(l => l.split(';').slice(4).forEach(p => {
                     const m = p.match(/^([SRV]):/); if (m) statKeys.add(m[1]);
                 }));
-                const cols = ['Classe','Date','Joueur','Observateur','Heure','Rôle'];
+                const cols = ['Application','Classe','Date','Joueur','Observateur','Heure','Rôle'];
                 [...statKeys].sort().forEach(k => {
                     cols.push(STAT_LBL[k] || `Pts ${k}`);
                     cols.push(STAT_LBL[k+'_moy'] || `Moy ${k}`);
                 });
                 const rows = dataLines.map(l => {
                     const p = l.split(';');
-                    const row = { Classe:classe, Date:date,
+                    const row = { Application:'VB EPS', Classe:classe, Date:date,
                         Joueur:(p[0]||'').trim(), Observateur:(p[1]||'').trim(),
                         Heure:(p[2]||'').trim(), 'Rôle':(p[3]||'').trim() };
                     p.slice(4).forEach(stat => {
@@ -2074,7 +2074,7 @@
                 </div>
 
                 Application conçue par <strong>Nathalie Prenois</strong>, enseignante EPS<br>
-                Collège Mont Saint Jean &nbsp;·&nbsp; Version 1.6
+                Collège Mont Saint Jean &nbsp;·&nbsp; Version 1.7
             </div>
         </div>
     </div>
