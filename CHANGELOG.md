@@ -2,7 +2,7 @@
 
 ## 2026-10-24 (écran toujours allumé - version affichée 1.3, versionCode 6)
 
-- **`FLAG_KEEP_SCREEN_ON`** ajouté dans `MainActivity` : l'écran ne se met plus en veille pendant une session de scan (APK). **Wake Lock PWA** : l'écran reste allumé tant que l'app est ouverte (avant : seulement caméra active), réacquis au retour au premier plan et au premier toucher. Cache `scan-eps-v11`. Non testé sur tablette, non publié.
+- **`FLAG_KEEP_SCREEN_ON`** ajouté dans `MainActivity` : l'écran ne se met plus en veille pendant une session de scan (APK). **Wake Lock PWA** : l'écran reste allumé tant que l'app est ouverte (avant : seulement caméra active), réacquis au retour au premier plan et au premier toucher. Cache `scan-eps-v11`. Publié dans la Release `v1.3` le 2026-10-24 ; non testé sur tablette.
 
 ## 2026-10-24 (pont natif, bouton Retour, nom d'export - version affichée 1.2, versionCode 5)
 
@@ -10,7 +10,7 @@
 - **Pont durci** : `shouldOverrideUrlLoading` limité à `appassets.androidplatform.net` ; caméra accordée seulement pour cette origine.
 - **Bouton Retour** : Kotlin délègue à `window.__androidBack()`. La page ferme d'abord la fenêtre ouverte (aide, Sheets), sinon demande « Quitter Scan EPS ? » (modale maison) si des données sont scannées ; sans donnée, l'app se ferme. Nouvelle méthode de pont `quitApp()`.
 - **Nom d'export** : `APPLICATION_CLASSE_AAAA-MM-JJ_HHhMM.csv` (ex. `TEN-EPS_3eB_2026-10-24_12h20.csv`), application et classe lues dans les données scannées ; plusieurs applications : `Multi-apps`, plus de 3 classes : `Multi-classes`, classe absente : segment omis. `:` interdit dans un nom de fichier Android, d'où `12h20`.
-- Cache `scan-eps-v10`. APK signé avec le même certificat (SHA-256 5440670f…f889). **Non testé sur tablette, non publié** (push et Release en attente de confirmation).
+- Cache `scan-eps-v10`. APK signé avec le même certificat (SHA-256 5440670f…f889). Publié dans la Release `v1.2` (remplacée ensuite par la `v1.3`). **Non testé sur tablette.**
 
 ## 2026-10-24 (charte EPS, aide, publication - version affichée 1.1, versionCode 4)
 
