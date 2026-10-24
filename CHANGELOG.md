@@ -2,7 +2,7 @@
 
 ## 2026-10-24 (réorganisation des dossiers, aucune nouvelle version)
 
-- **Fusion de `ScanEPS/` (projet Android Studio) dans `SCAN EPS/android/`** : un seul dossier pour l'app, comme Match Manager EPS. Tâche Gradle `syncWebApp` ajoutée (`android/app/build.gradle`) : `index.html`, `sw.js`, `manifest.json` et les 4 icônes sont recopiés automatiquement dans les assets avant chaque build, fin de la copie manuelle. `android/`, `*.apk` et `.gradle/` ajoutés au `.gitignore` (dépôt public inchangé). Vérifié : `assembleRelease` réussit depuis le nouvel emplacement, versionCode 11 / versionName 1.8, même certificat (SHA-256 `5440670f…f889`). L'APK publié n'est pas modifié.
+- **Fusion de `ScanEPS/` (projet Android Studio) dans `SCAN EPS/android/`** : un seul dossier pour l'app, comme Match Manager EPS. Tâche Gradle `syncWebApp` ajoutée (`android/app/build.gradle`) : `index.html`, `sw.js`, `manifest.json` et les 4 icônes sont recopiés automatiquement dans les assets avant chaque build, fin de la copie manuelle. `*.apk` et `.gradle/` ajoutés au `.gitignore` racine. Le projet `android/` est ensuite versionné (commit `0407bc1`, `android/.gitignore` calqué sur Match Manager EPS : copies d'assets générées, clés, build et APK exclus). Vérifié : `assembleRelease` réussit depuis le nouvel emplacement, versionCode 11 / versionName 1.8, même certificat (SHA-256 `5440670f…f889`). L'APK publié n'est pas modifié.
 
 ## 2026-10-24 (durcissement sécurité - version 1.8, versionCode 11, publiée dans la Release `v1.8`)
 
