@@ -1766,9 +1766,9 @@
             <div class="aide-section">
                 <h3>⚡ Fonctionnalités</h3>
                 <ul>
-                    <li><strong>Multi-lignes</strong> : un seul QR code peut contenir jusqu'à <strong>5 enregistrements</strong> (ex. 5 joueurs VB EPS) — tous sont importés en une seule passe.</li>
+                    <li><strong>Multi-lignes</strong> : un seul QR code peut contenir plusieurs enregistrements (ex. plusieurs joueurs VB EPS, ou toute la séance BiathlonVMA) — tous sont importés en une seule passe. Si un QR a été tronqué par l'application d'origine (<code>...+N obs</code>), un avertissement indique combien d'enregistrements manquent.</li>
                     <li><strong>Colonnes illimitées</strong> : le scanner s'adapte automatiquement au nombre de colonnes (LaserFit peut en générer 15+).</li>
-                    <li><strong>3 formats reconnus automatiquement</strong> : CSV standard (LaserFit…), JSON compact (BiathlonVMA), multi-lignes avec préfixe (VB EPS, TEN EPS).</li>
+                    <li><strong>3 formats reconnus automatiquement</strong> : CSV standard, JSON compact (BiathlonVMA), multi-lignes avec préfixe (VB EPS, TEN EPS, LaserFit).</li>
                     <li><strong>Fusion des formats</strong> : vous pouvez scanner des QR codes de différentes applications dans la même session — les colonnes sont fusionnées sans erreur.</li>
                     <li><strong>Export CSV</strong> : compatible Excel français (séparateur <code>;</code>, encodage UTF-8).</li>
                     <li><strong>100 % hors ligne</strong> : fonctionne sans connexion internet une fois installée.</li>
@@ -1782,7 +1782,7 @@
                 <div class="aide-install">
                     <strong>Option 1 — via le fichier APK :</strong>
                     <ol style="margin-top:6px;">
-                        <li>Téléchargez le fichier <strong>SCANEPS.apk</strong> sur la tablette.</li>
+                        <li>Téléchargez le fichier <strong>SCANEPS-signed.apk</strong> sur la tablette.</li>
                         <li>Ouvrez le fichier téléchargé — Android vous demande d'autoriser les sources inconnues : acceptez.</li>
                         <li>Appuyez sur <strong>Installer</strong> puis <strong>Ouvrir</strong>.</li>
                     </ol>
@@ -1791,7 +1791,7 @@
                     <strong>Option 2 — via Chrome (PWA) :</strong>
                     <ol style="margin-top:6px;">
                         <li>Ouvrez <strong>Chrome</strong> et rendez-vous sur :<br>
-                            <code style="font-size:0.85em;">https://msjeps.github.io/scaneps/</code></li>
+                            <code style="font-size:0.85em;">https://apps.outils-eps.fr/scaneps/</code></li>
                         <li>Appuyez sur les <strong>⋮ trois points</strong> en haut à droite.</li>
                         <li>Choisissez <strong>« Ajouter à l'écran d'accueil »</strong>.</li>
                         <li>L'application apparaît sur l'écran d'accueil comme une app native.</li>
@@ -1806,7 +1806,7 @@
                     <strong>Via Safari (obligatoire sur iOS) :</strong>
                     <ol style="margin-top:6px;">
                         <li>Ouvrez <strong>Safari</strong> (pas Chrome ni Firefox) et rendez-vous sur :<br>
-                            <code style="font-size:0.85em;">https://msjeps.github.io/scaneps/</code></li>
+                            <code style="font-size:0.85em;">https://apps.outils-eps.fr/scaneps/</code></li>
                         <li>Appuyez sur l'icône <strong>Partager</strong> <span style="font-size:1.1em;">⬆</span> en bas de l'écran.</li>
                         <li>Faites défiler et choisissez <strong>« Sur l'écran d'accueil »</strong>.</li>
                         <li>Confirmez avec <strong>Ajouter</strong> — l'icône SCAN EPS apparaît sur votre écran d'accueil.</li>
