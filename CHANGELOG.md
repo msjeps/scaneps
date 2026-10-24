@@ -1,5 +1,13 @@
 # Changelog - SCAN EPS
 
+## 2026-10-24 (charte EPS, aide, publication - version affichée 1.1, versionCode 4)
+
+- **Charte graphique** ([DESIGN-SYSTEM-EPS.md](../DESIGN-SYSTEM-EPS.md)) : version, pied de page, police et variables CSS étaient déjà conformes. Titre et titre de l'aide : texte en dégradé transparent remplacé par une couleur unie ; boutons (`primaire`, `success`, `csv`, `sheets`, `danger`) et badge « Scanner universel » : dégradé remplacé par un fond uni (le combo `linear-gradient` + `border-radius` n'est pas rendu sur le GPU PowerVR GE8320). Non testé sur tablette.
+- **Aide** : adresse web `apps.outils-eps.fr/scaneps/` (l'ancienne `msjeps.github.io` redirige), nom de l'APK `SCANEPS-signed.apk` avec lien de téléchargement (Release GitHub « latest »), limite « 5 enregistrements » retirée (le code n'en impose aucune), avertissement de QR tronqué (`...+N obs`) documenté, LaserFit classé dans les formats multi-lignes à préfixe.
+- **Publication** : `index.html` + `sw.js` poussés sur `msjeps/scaneps` (cache `scan-eps-v7`). APK `versionCode` 4 (même certificat que le v3, installable par-dessus) publié dans la Release `v1.1` : https://github.com/msjeps/scaneps/releases/tag/v1.1. Le lien de l'aide n'est pas encore dans l'APK publié (prévu pour v1.2).
+- **Dépôt git local** créé dans `SCAN EPS/`, relié à `origin` (`msjeps/scaneps`). L'APK n'est pas versionné (il est dans la Release).
+- **À faire** : corrections du pont natif `window.Android` listées dans `todo.md` (faux message de succès à l'annulation du sélecteur, `shouldOverrideUrlLoading`, origine de la caméra...).
+
 ## 2026-10-24 (audit de sécurité - correctif interne, version affichée inchangée)
 
 - **Faille XSS stockée corrigée** : les données décodées d'un QR (en-têtes de colonnes, cellules,
@@ -9,9 +17,9 @@
   appliqué aux 4 points de rendu concernés (`genererEntetes`, les deux bandeaux `infoColonnes`,
   `afficherDonnees`). Correctif recopié dans les assets de l'APK (`ScanEPS/app/src/main/assets/`).
   Cache du service worker passé à `scan-eps-v3`. Détails dans `security-audit-reports/SCAN-EPS/`
-  et la leçon générale dans `../LECONS-TECHNIQUES.md`. **Non publié** (en attente d'accord).
+  et la leçon générale dans `../LECONS-TECHNIQUES.md`. Publié le 2026-10-24.
 - **Injection de formule CSV corrigée** (`construireCSV` : préfixe `'` sur `= + - @`, nombres purs épargnés).
-- **APK** : `allowBackup="false"`, nom de fichier assaini et taille limitée dans le pont `saveCSV`, `versionCode` 3 (version affichée 1.1 inchangée), `SCANEPS-signed.apk` reconstruit avec la même clé. Cache SW `scan-eps-v4`. Non testé sur tablette, non publié sur GitHub Pages.
+- **APK** : `allowBackup="false"`, nom de fichier assaini et taille limitée dans le pont `saveCSV`, `versionCode` 3 (version affichée 1.1 inchangée), `SCANEPS-signed.apk` reconstruit avec la même clé. Cache SW `scan-eps-v4`. Non testé sur tablette. Publié sur GitHub Pages le 2026-10-24.
 
 ## Version 1.1 - 2026-10-08 (audit de compatibilité)
 
