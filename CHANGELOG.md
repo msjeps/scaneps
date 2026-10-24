@@ -1,5 +1,15 @@
 # Changelog - SCAN EPS
 
+## 2026-10-24 (scan caméra réparé sur la tablette lente - version 1.4, versionCode 7, publiée dans la Release `v1.4`)
+
+- **Cause trouvée par mesure sur la Lenovo TB-X606F** (débogage USB, captures et logcat) : jsQR mettait **1084 ms par image** (WebView 155, CPU Helio P22T), plus une analyse inversée (`attemptBoth`) et un nouveau canvas 1280×720 créé 60 fois par seconde. Le premier QR LaserFit demandait environ 1 minute, puis l'app saturait.
+- **Lecture native `BarcodeDetector`** (134 ms par image, mesuré) utilisée en priorité quand le WebView la fournit ; jsQR reste le repli si elle est absente ou échoue, plus un essai sur 20 si elle ne lit rien. Résultat sur la tablette : premier QR lu en 1 à 2 s, les suivants s'enchaînent.
+- Boucle d'analyse : un seul canvas réutilisé (`willReadFrequently`), `setTimeout` de 150 ms après la fin de chaque analyse au lieu de `requestAnimationFrame`, `dontInvert`.
+- **Cadre vert statique** : l'animation `scanPulse` (ombre de 2000 px animée) repeignait toute la vidéo à chaque image sur le GPU PowerVR ; supprimée avec les coins arrondis de la zone vidéo.
+- **Veille caméra** : relance automatique si l'image se fige plus de 4 s ou si la piste est coupée ; mise au point continue demandée (la caméra arrière 0 a l'autofocus).
+- Permission `VIBRATE` ajoutée (la vibration de confirmation échouait silencieusement).
+- Cache `scan-eps-v14`. Même certificat (SHA-256 5440670f…f889). Testé sur la tablette : scan, enchaînement, arrêt/relance de la caméra, écran allumé. Reste à tester avant publication : plusieurs minutes de scan continu, rotation, QR d'autres apps.
+
 ## 2026-10-24 (clone du dépôt public)
 
 - **Clone de `msjeps/scaneps`** créé dans `~/Documents/APPLI EPS/APPLI EPS/scaneps/` (même convention que LaserFit, Match Manager EPS et Biathlon VMA), avec l'APK de la Release `v1.3` (`SCANEPS-signed.apk`, identique octet pour octet). **Règle : ce clone est mis à jour à chaque publication PWA ou APK.** Aucun changement de code. Le dossier `scaneps-backup/` (anciens APK + clé `scaneps.jks`) a été déplacé dans ce clone (`scaneps/scaneps-backup/`, exclu de git) ; `storeFile` de `ScanEPS/keystore.properties` mis à jour, fichier `.jks` retrouvé au nouvel emplacement.
