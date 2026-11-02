@@ -1228,6 +1228,32 @@
             // scan, sous la clé "r") - même forme d'élève que BJ2, donc même schéma de colonnes.
             SCHEMAS.BJ3 = SCHEMAS.BJ2;
 
+            // CL = Compteur Lutte — classement par groupe, structure g[].r[]
+            if (prefix === 'CL' && Array.isArray(data.g)) {
+                const cols = ['Application', 'Classe', 'Date', 'Enceinte', 'Groupe',
+                              'Élève', 'V', 'N', 'D', 'Pts', 'Pts class.'];
+                const rows = [];
+                data.g.forEach(function(gr) {
+                    (gr.r || []).forEach(function(el) {
+                        rows.push({
+                            'Application': 'Compteur Lutte',
+                            'Classe': data.c || '',
+                            'Date': data.d || '',
+                            'Enceinte': String(data.e || ''),
+                            'Groupe': gr.id || '',
+                            'Élève': el.n || '',
+                            'V': String(el.v || 0),
+                            'N': String(el.nl || 0),
+                            'D': String(el.d || 0),
+                            'Pts': String(el.p || 0),
+                            'Pts class.': String(el.pc || 0)
+                        });
+                    });
+                });
+                if (rows.length === 0) throw new Error('Aucun résultat dans le QR Compteur Lutte');
+                return { cols, rows, source: 'Compteur Lutte' };
+            }
+
             // Construit {cols, row} pour UN enregistrement élève à partir d'un schéma connu -
             // partagé entre le cas "1 élève par QR" (BJ1/BJ2) et "N élèves dans un seul QR" (BJ3).
             function construireLigneDepuisSchema(schema, enregistrement, mode) {
