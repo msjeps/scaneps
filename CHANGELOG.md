@@ -1,5 +1,11 @@
 # Changelog - SCAN EPS
 
+## 2026-11-02 (schéma Compteur Lutte `CL|`, PWA seulement, version affichée 1.8 inchangée)
+
+- **Schéma `CL|` ajouté dans `parseJSON()`** (commit `a4e0549`, fait depuis la session Compteur Lutte) : une ligne par élève (11 colonnes : Application, Classe, Date, Enceinte, Groupe, Élève, V, N, D, Pts, Pts class.) depuis la structure imbriquée `g[].r[]`. **Vérifié le 2026-11-02** : le payload de `exporterQR()` de Compteur Lutte correspond bien aux clés lues (`c d e g[].id r[].n v nl d p pc`). Régression testée en Node sur `BJ2`, `BJ3`, JSON inconnu, `TENEPS|`, `LASERFIT|`, `VBEPS|` et CSV : sorties inchangées (le bloc `CL` ne s'active que pour le préfixe `CL` avec un tableau `g`). Cas limites : `CL|{"c":"x"}` (sans `g`) retombe sur le JSON générique, `g` vide donne l'erreur « Aucun résultat dans le QR Compteur Lutte », champs manquants donnent des 0. Nom d'export : `Compteur-Lutte_<classe>_<date>_<heure>.csv`.
+- **Aide** : badge « Compteur Lutte » ajouté aux applications compatibles, JSON compact cite Compteur Lutte. Cache `scan-eps-v20`.
+- **APK** : l'APK 1.8 publié ne contient PAS le schéma `CL` (les assets sont recopiés à la construction). Un QR Compteur Lutte scanné avec cet APK s'affiche en colonnes brutes (`c`, `d`, `e`, `g`). Une version 1.9 (versionCode 12) est à construire et publier pour les tablettes ; la PWA en ligne l'a déjà.
+
 ## 2026-10-24 (réorganisation des dossiers, aucune nouvelle version)
 
 - **Fusion de `ScanEPS/` (projet Android Studio) dans `SCAN EPS/android/`** : un seul dossier pour l'app, comme Match Manager EPS. Tâche Gradle `syncWebApp` ajoutée (`android/app/build.gradle`) : `index.html`, `sw.js`, `manifest.json` et les 4 icônes sont recopiés automatiquement dans les assets avant chaque build, fin de la copie manuelle. `*.apk` et `.gradle/` ajoutés au `.gitignore` racine. Le projet `android/` est ensuite versionné (commit `0407bc1`, `android/.gitignore` calqué sur Match Manager EPS : copies d'assets générées, clés, build et APK exclus). Vérifié : `assembleRelease` réussit depuis le nouvel emplacement, versionCode 11 / versionName 1.8, même certificat (SHA-256 `5440670f…f889`). L'APK publié n'est pas modifié.
