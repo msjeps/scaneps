@@ -1,5 +1,10 @@
 # Changelog - SCAN EPS
 
+## 2026-11-22 (titre et description pour les moteurs de recherche, PWA seulement, version affichée 1.9 inchangée)
+
+- **Référencement** : balise `<title>` « Scan EPS : récupérer les résultats par QR code » (l'ancien « Scanner QR Universel - EPS » ne contenait pas le nom de l'application) et `<meta name="description">` réécrite (Bing signalait des titres/descriptions trop courts sur le site). Aucun changement de fonction, pas de nouvelle APK : le titre n'est pas visible dans le WebView.
+- Cache `scan-eps-v22`.
+
 ## 2026-11-04 (nouvelle icône, schéma `CL|` embarqué - version 1.9, versionCode 12, publiée dans la Release `v1.9`)
 
 - **Icône de l'APK** : l'ancienne icône adaptative (RGB, plein cadre) était rognée sur le bureau de la tablette. Nouvelle icône RGBA : calque avant à 62 % du canevas sur fond transparent (zone sûre Android), fond adaptatif `#1E81B0` (bleu de l'icône), versions carrée et ronde pour les 5 densités (xxxhdpi 192 px). Vérifié sur aperçu simulé (masque rond et carré arrondi), pas encore sur tablette. Icônes de la PWA (`icon_*.png`) non modifiées.
