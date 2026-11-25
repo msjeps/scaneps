@@ -5,7 +5,12 @@
 - **Lignes identiques ignorées** (`traiterQRCode`) : une ligne dont toutes les valeurs sont identiques à une ligne déjà enregistrée (ou répétée dans le même QR) n'est pas ajoutée. Cause : un scan long ou un QR relu enregistrait plusieurs fois les mêmes observations (64 lignes dont une vingtaine de doublons sur le CSV LaserFit du 2026-11-19). Le statut indique « N doublons ignorés » ; si tout est déjà connu : « Déjà enregistré » + deux bips graves + triple vibration, sans toucher au compteur.
 - **Sons** : `playSuccessSound` passe de un sinus à 0,3 de volume à deux notes carrées montantes à 0,9 ; `playDuplicateSound` (deux notes graves) distingue « déjà enregistré » de « ajouté ».
 - **LaserFit** : une ligne `pratiquant|observateur` donne à cette ligne son propre observateur (en-tête = observateur de la 1re observation). Avant, le dernier observateur saisi écrasait tous les autres. Format rétrocompatible.
+- **Vibration plus forte (publiée en 1.11)** : ajout réussi = une vibration longue de 400 ms (120 ms avant) ; doublon ignoré = trois impulsions de 150 ms. Pour l'extérieur, quand le son est couvert par le bruit. Android ne permet pas de régler l'intensité depuis une page web : on joue sur la durée.
 - Cache `scan-eps-v23`. Version affichée et versionCode inchangés : à incrémenter à la construction de l'APK. À publier avant LaserFit.
+
+## 1.11 - 2026-11-26 (vibration plus forte, versionCode 14, cache `scan-eps-v24`)
+
+- Vibration : 400 ms à l'ajout, trois impulsions de 150 ms pour un doublon (voir ci-dessous, 1.10).
 
 ## 2026-11-22 (titre et description pour les moteurs de recherche, PWA seulement, version affichée 1.9 inchangée)
 

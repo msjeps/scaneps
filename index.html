@@ -751,7 +751,7 @@
         <div class="en-tete" style="position:relative;">
             <button class="btn-aide" id="btnAide" title="Aide &amp; informations" aria-label="Aide">?</button>
             <h1>Scan EPS</h1>
-            <p>Version 1.10</p>
+            <p>Version 1.11</p>
             <span class="badge-universel">🌟 Scanner universel : regroupe les résultats de plusieurs élèves dans un même fichier</span>
         </div>
 
@@ -1476,7 +1476,7 @@
                     updateStatut('ℹ️ Déjà enregistré : ' + nbDoublons + ' ligne' + (nbDoublons > 1 ? 's' : '') +
                         ' identique' + (nbDoublons > 1 ? 's' : '') + ' ignorée' + (nbDoublons > 1 ? 's' : ''), 'statut-warning');
                     playDuplicateSound();
-                    if (navigator.vibrate) navigator.vibrate([60, 60, 60]);
+                    if (navigator.vibrate) navigator.vibrate([150, 80, 150, 80, 150]);
                     return;
                 }
 
@@ -1517,7 +1517,7 @@
 
                 afficherDonnees();
                 playSuccessSound();
-                if (navigator.vibrate) navigator.vibrate(120);
+                if (navigator.vibrate) navigator.vibrate(400);
                 sauvegarderDonnees();
 
             } catch (error) {
@@ -2143,7 +2143,7 @@
                 </div>
 
                 Application conçue par <strong>Nathalie Prenois</strong>, enseignante EPS<br>
-                Collège Mont Saint Jean &nbsp;·&nbsp; Version 1.10
+                Collège Mont Saint Jean &nbsp;·&nbsp; Version 1.11
             </div>
         </div>
     </div>
