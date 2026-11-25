@@ -1,5 +1,12 @@
 # Changelog - SCAN EPS
 
+## 1.10 - 2026-11-25 (doublons ignorés, sons plus forts, observateur par ligne LaserFit - non publié)
+
+- **Lignes identiques ignorées** (`traiterQRCode`) : une ligne dont toutes les valeurs sont identiques à une ligne déjà enregistrée (ou répétée dans le même QR) n'est pas ajoutée. Cause : un scan long ou un QR relu enregistrait plusieurs fois les mêmes observations (64 lignes dont une vingtaine de doublons sur le CSV LaserFit du 2026-11-19). Le statut indique « N doublons ignorés » ; si tout est déjà connu : « Déjà enregistré » + deux bips graves + triple vibration, sans toucher au compteur.
+- **Sons** : `playSuccessSound` passe de un sinus à 0,3 de volume à deux notes carrées montantes à 0,9 ; `playDuplicateSound` (deux notes graves) distingue « déjà enregistré » de « ajouté ».
+- **LaserFit** : une ligne `pratiquant|observateur` donne à cette ligne son propre observateur (en-tête = observateur de la 1re observation). Avant, le dernier observateur saisi écrasait tous les autres. Format rétrocompatible.
+- Cache `scan-eps-v23`. Version affichée et versionCode inchangés : à incrémenter à la construction de l'APK. À publier avant LaserFit.
+
 ## 2026-11-22 (titre et description pour les moteurs de recherche, PWA seulement, version affichée 1.9 inchangée)
 
 - **Référencement** : balise `<title>` « Scan EPS : récupérer les résultats par QR code » (l'ancien « Scanner QR Universel - EPS » ne contenait pas le nom de l'application) et `<meta name="description">` réécrite (Bing signalait des titres/descriptions trop courts sur le site). Aucun changement de fonction, pas de nouvelle APK : le titre n'est pas visible dans le WebView.

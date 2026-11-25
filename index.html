@@ -751,7 +751,7 @@
         <div class="en-tete" style="position:relative;">
             <button class="btn-aide" id="btnAide" title="Aide &amp; informations" aria-label="Aide">?</button>
             <h1>Scan EPS</h1>
-            <p>Version 1.9</p>
+            <p>Version 1.10</p>
             <span class="badge-universel">🌟 Scanner universel : regroupe les résultats de plusieurs élèves dans un même fichier</span>
         </div>
 
@@ -1364,8 +1364,10 @@
                     const p = l.split(';').map(v => v.trim());
                     const total = p.length > 1 ? p[p.length - 1] : '';
                     const milieu = p.slice(1, p.length > 1 ? -1 : undefined);
+                    // « pratiquant|observateur » : observateur propre à la ligne (LaserFit 2.7+)
+                    const nomObs = (p[0] || '').split('|');
                     const row = { Application: 'LaserFit', Classe: classe, Date: date,
-                        Observateur: obs, Pratiquant: p[0] || '' };
+                        Observateur: (nomObs[1] || '').trim() || obs, Pratiquant: (nomObs[0] || '').trim() };
                     for (let i = 0; i + 2 < milieu.length; i += 3) {
                         const n = i / 3 + 1;
                         row['Exercice ' + n] = milieu[i] || '';
@@ -1455,8 +1457,28 @@
                 else if (format === 'multilignes')  result = parseMultiLignes(texte);
                 else                                result = parseCSV(texte);
 
-                const { cols, rows, source } = result;
-                console.log('Format : ' + source + ' | ' + cols.length + ' colonnes | ' + rows.length + ' ligne(s)');
+                const { cols, source } = result;
+                // Lignes identiques déjà enregistrées (ou répétées dans ce même QR) : ignorées.
+                // Un scan trop long ou un QR relu deux fois ne doit pas créer de doublons.
+                const cle = r => JSON.stringify(Object.keys(r).sort().map(k => [k, r[k]]));
+                const dejaVues = new Set(donnees.map(cle));
+                const rows = [];
+                let nbDoublons = 0;
+                result.rows.forEach(r => {
+                    const c = cle(r);
+                    if (dejaVues.has(c)) { nbDoublons++; return; }
+                    dejaVues.add(c);
+                    rows.push(r);
+                });
+                console.log('Format : ' + source + ' | ' + cols.length + ' colonnes | ' + rows.length + ' ligne(s), ' + nbDoublons + ' doublon(s)');
+
+                if (rows.length === 0) {
+                    updateStatut('ℹ️ Déjà enregistré : ' + nbDoublons + ' ligne' + (nbDoublons > 1 ? 's' : '') +
+                        ' identique' + (nbDoublons > 1 ? 's' : '') + ' ignorée' + (nbDoublons > 1 ? 's' : ''), 'statut-warning');
+                    playDuplicateSound();
+                    if (navigator.vibrate) navigator.vibrate([60, 60, 60]);
+                    return;
+                }
 
                 // Initialisation ou fusion des colonnes
                 if (colonnes.length === 0) {
@@ -1476,6 +1498,7 @@
                 document.getElementById('compteurColonnes').textContent = colonnes.length;
 
                 const nb = rows.length;
+                const txtDoublons = nbDoublons > 0 ? ' (' + nbDoublons + ' doublon' + (nbDoublons > 1 ? 's' : '') + ' ignoré' + (nbDoublons > 1 ? 's' : '') + ')' : '';
                 // VB EPS / LaserFit tronquent le QR trop gros en ajoutant "...+N obs" : sans ce
                 // contrôle, les observations manquantes seraient perdues sans aucun signal.
                 const mTronque = format === 'multilignes' && texte.match(/^\.\.\.\+(\d+)\s*obs/m);
@@ -1487,7 +1510,7 @@
                     );
                 } else {
                     updateStatut(
-                        '✅ ' + nb + ' enregistrement' + (nb > 1 ? 's' : '') + ' ajouté' + (nb > 1 ? 's' : '') + ' [' + source + ']',
+                        '✅ ' + nb + ' enregistrement' + (nb > 1 ? 's' : '') + ' ajouté' + (nb > 1 ? 's' : '') + ' [' + source + ']' + txtDoublons,
                         'statut-success'
                     );
                 }
@@ -1853,26 +1876,37 @@
         /* ========================================
            SON DE SUCCÈS
            ======================================== */
-        function playSuccessSound() {
+        // Bip fort et net : deux notes montantes (succès) ; deux notes graves (doublon ignoré)
+        function jouerBips(notes) {
             try {
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                oscillator.frequency.value = 800;
-                oscillator.type = 'sine';
-                
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-                
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.2);
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                let t = ctx.currentTime;
+                notes.forEach(function (n) {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.type = 'square';
+                    osc.frequency.value = n.f;
+                    gain.gain.setValueAtTime(0.9, t);
+                    gain.gain.setValueAtTime(0.9, t + n.d - 0.03);
+                    gain.gain.linearRampToValueAtTime(0.0, t + n.d);
+                    osc.start(t);
+                    osc.stop(t + n.d);
+                    t += n.d + 0.04;
+                });
+                setTimeout(function () { try { ctx.close(); } catch (e) {} }, (t - ctx.currentTime) * 1000 + 200);
             } catch (error) {
                 console.log('Son non disponible');
             }
+        }
+
+        function playSuccessSound() {
+            jouerBips([{ f: 1000, d: 0.12 }, { f: 1500, d: 0.2 }]);
+        }
+
+        function playDuplicateSound() {
+            jouerBips([{ f: 500, d: 0.15 }, { f: 500, d: 0.15 }]);
         }
 
         /* ========================================
@@ -2015,6 +2049,7 @@
                 <h3>⚡ Fonctionnalités</h3>
                 <ul>
                     <li><strong>Multi-lignes</strong> : un seul QR code peut contenir plusieurs enregistrements (ex. plusieurs joueurs VB EPS, ou toute la séance BiathlonVMA) — tous sont importés en une seule passe. Si un QR a été tronqué par l'application d'origine (<code>...+N obs</code>), un avertissement indique combien d'enregistrements manquent.</li>
+                    <li><strong>Doublons ignorés</strong> : une ligne identique à une ligne déjà scannée n'est pas ajoutée. Un bip grave (deux notes) et le message « Déjà enregistré » indiquent que le QR était déjà dans la liste ; deux notes aiguës indiquent un ajout.</li>
                     <li><strong>Colonnes illimitées</strong> : le scanner s'adapte automatiquement au nombre de colonnes (LaserFit peut en générer 15+).</li>
                     <li><strong>3 formats reconnus automatiquement</strong> : CSV standard, JSON compact (BiathlonVMA, Compteur Lutte), multi-lignes avec préfixe (VB EPS, Match Manager EPS, LaserFit).</li>
                     <li><strong>Fusion des formats</strong> : vous pouvez scanner des QR codes de différentes applications dans la même session — les colonnes sont fusionnées sans erreur.</li>
@@ -2108,7 +2143,7 @@
                 </div>
 
                 Application conçue par <strong>Nathalie Prenois</strong>, enseignante EPS<br>
-                Collège Mont Saint Jean &nbsp;·&nbsp; Version 1.9
+                Collège Mont Saint Jean &nbsp;·&nbsp; Version 1.10
             </div>
         </div>
     </div>
